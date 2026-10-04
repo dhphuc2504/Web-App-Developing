@@ -709,6 +709,13 @@ ul {
   }
 }
 
+@media (max-width: 23.99rem) {
+  .site-brand {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

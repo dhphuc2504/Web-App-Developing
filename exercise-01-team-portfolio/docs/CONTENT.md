@@ -32,43 +32,66 @@ Repeat this block for each real project. Remove this section if there are no sha
 
 ## 3. Member 1
 
-- **Full name:** `[Member 1 full name]`
-- **Preferred display name:** `[Display name]`
-- **Pronouns:** `[Optional]`
-- **Team role:** `[Role or primary discipline]`
-- **Professional headline:** `[Short headline]`
-- **Card introduction:** `[One or two sentences]`
-- **Biography:** `[One or more short paragraphs]`
+- **Full name:** Đoàn Hồng Phúc
+- **Preferred display name:** Phúc Đoàn
+- **Team role:** Software Engineering / Full-stack Developer
+- **Professional headline:** Software engineering student passionate about systems-level programming, full-stack web development and game development.
+- **Card introduction:** Specializes in building web applications with Node.js and C/C++ systems. Strongly focused on database optimization and secure API design.
+- **Biography:** I am a student developing my skills to become a professional software engineer. I have technical experience in systems-level programming with C and C++, networking, and full-stack web development using Node.js. Recently, I have focused on system design by planning a virtual wallet and transaction engine, emphasizing database optimization and secure API design. I have also gained experience in project management, mentoring others, and maintaining a proactive approach toward my professional growth.
 - **Portrait:** `[Relative file path]`
 - **Portrait alt text:** `[Description or empty if adjacent text makes it redundant]`
-- **Location:** `[Optional public location]`
-- **Public email:** `[Optional approved email]`
-- **GitHub:** `[Optional approved URL]`
-- **LinkedIn:** `[Optional approved URL]`
+- **Location:** Ho Chi Minh City, Vietnam
+- **Public email:** dhphuc2504@gmail.com
+- **GitHub:** https://github.com/dhphuc2504
+- **LinkedIn:** https://www.linkedin.com/in/ph%C3%BAc-%C4%91o%C3%A0n-776b30413/?isSelfProfile=true
 - **Other public link:** `[Optional approved URL]`
 
 ### Skills
 
-- **Category:** `[For example, Front-end]`
-  - `[Skill]`
-  - `[Skill]`
+- **Category:** Systems & Network Programming
+  - C/C++
+  - Networking
+  - OS functionalities programming (xv6)
+- **Category:** Web Development & Databases
+  - Node.js (Full-stack web development)
+  - System Design
+  - Database design, SQL query construction, and relational algebra
+- **Category:** Soft Skills
+  - Project Management & Mentoring
+  - Professional English communication
 
 ### Education or experience
 
-- **Title:** `[Program, role, or activity]`
-- **Organization:** `[School, employer, or organization]`
-- **Period:** `[Dates, if approved]`
-- **Description:** `[Concise factual description]`
+- **Title:** Bachelor of Information Technology
+- **Organization:** Ho Chi Minh City University of Science (VNU-HCM)
+- **Period:** 2024 – 2028
+- **Description:** Studying the four-year Bachelor of Science in Information Technology at the Faculty of Information Technology, a VNU-HCM member university whose FIT faculty has offered computing programs since 1995. The regular IT program (major code 7480201) is a 138-credit degree covering ICT fundamentals and the design, implementation, and operation of computing solutions, with the option of a general ICT track or a computer networks and computer security specialization.
 
 ### Personal projects
 
-- **Project name:** `[Name]`
-- **Problem or objective:** `[Purpose]`
-- **Contribution:** `[Member's work]`
-- **Technologies:** `[Technology list]`
-- **Project URL:** `[Optional approved URL]`
-- **Repository URL:** `[Optional approved URL]`
-- **Image and alt text:** `[Optional]`
+- **Project name:** Virtual wallet and transaction engine
+- **Problem or objective:** Design a secure and performance-optimized transaction processing system.
+- **Contribution:** Planned the system architecture design, focusing on database optimization and secure API design.
+- **Technologies:** System design, Databases, APIs
+- **Project URL:** `[Empty]`
+- **Repository URL:** https://github.com/dhphuc2504/banking-transaction-engine
+- **Image and alt text:** `[Empty]`
+
+- **Project name:** Smart Travelling Recommendation System
+- **Problem or objective:** Provide a smart and personalized hotel recommendation system support booking accommodation online for travellers.
+- **Contribution:** Planned the system architecture design, focusing on database optimization and secure API design.
+- **Technologies:** System design, Databases, APIs
+- **Project URL:** `[Empty]`
+- **Repository URL:** https://github.com/TTKhiem/Travel-system
+- **Image and alt text:** `[Empty]`
+
+- **Project name:** Mental health web application
+- **Problem or objective:** Provide an online platform to support user mental health.
+- **Contribution:** Participated in system development as a full-stack developer.
+- **Technologies:** Python, Full-stack Web
+- **Project URL:** `[Empty]`
+- **Repository URL:** https://github.com/TTKhiem/Tuvantamly
+- **Image and alt text:** `[Empty]`
 
 ## 4. Member 2
 
@@ -113,37 +136,55 @@ Repeat this block for each real project. Remove this section if there are no sha
 
 ## 5. Member 3
 
-Provide the same fields and section structure used for Member 1.
-
-- **Full name:** `[Member 3 full name]`
-- **Preferred display name:** `[Display name]`
-- **Team role:** `[Role or primary discipline]`
-- **Professional headline:** `[Short headline]`
-- **Card introduction:** `[One or two sentences]`
-- **Biography:** `[One or more short paragraphs]`
+- **Full name:** Phan Nhật Anh
+- **Preferred display name:** Phan Anh
+- **Team role:** Software Engineering / Full-stack Developer
+- **Professional headline:** Software engineering student passionate about systems-level programming, full-stack web development and game development.
+- **Card introduction:** Specializes in building web applications with Node.js and C/C++ systems. Strongly focused on database optimization and secure API design.
+- **Biography:** I am a student developing my skills to become a professional software engineer. I have technical experience in systems-level programming with C and C++, networking, and full-stack web development using Node.js. Recently, I have focused on system design by planning a virtual wallet and transaction engine, emphasizing database optimization and secure API design. I have also gained experience in project management, mentoring others, and maintaining a proactive approach toward my professional growth.
 - **Portrait:** `[Relative file path]`
-- **Skills:** `[Grouped skill information]`
-- **Education or experience:** `[Structured entries]`
-- **Personal projects:** `[Structured entries]`
-- **Approved contact and social links:** `[Links or none]`
+- **Portrait alt text:** `[Description or empty if adjacent text makes it redundant]`
+- **Location:** Ho Chi Minh City, Vietnam
+- **Public email:** pnhatanh@gmail.com
+- **GitHub:** https://github.com/Panda2710
+- **LinkedIn:** `[Optional approved URL]`
+- **Other public link:** `[Optional approved URL]`
 
-## 6. Site-wide text
+### Skills
 
-- **Navigation label for home:** `[Team or team name]`
-- **Primary hero action:** `[For example, Meet the team]`
-- **Closing message:** `[Optional short call to action]`
-- **Footer course notice:** `[Approved wording]`
-- **Copyright owner:** `[Team name or member names]`
+- **Category:** Systems & Network Programming
+  - C/C++
+  - Networking
+  - OS functionalities programming (xv6)
+- **Category:** Web Development & Databases
+  - Node.js (Full-stack web development)
+  - System Design
+  - Database design, SQL query construction, and relational algebra
+- **Category:** Soft Skills
+  - Project Management
+  - Professional English communication
 
-## 7. Content quality checklist
+### Education or experience
 
-Before implementation is considered final:
+- **Title:** Bachelor of Information Technology
+- **Organization:** Ho Chi Minh City University of Science (VNU-HCM)
+- **Period:** 2024 – 2028
+- **Description:** Studying the four-year Bachelor of Science in Information Technology at the Faculty of Information Technology, a VNU-HCM member university whose FIT faculty has offered computing programs since 1995. The regular IT program (major code 7480201) is a 138-credit degree covering ICT fundamentals and the design, implementation, and operation of computing solutions, with the option of a general ICT track or a computer networks and computer security specialization.
 
-- Names and role titles use consistent spelling.
-- Descriptions use a consistent point of view and tone.
-- Every claim is accurate and approved.
-- Contact details are intentionally public.
-- Every external link has been opened and verified.
-- Every supplied image has usage permission.
-- Every meaningful image has suitable alternative text.
-- Placeholder brackets are absent from the production version.
+### Personal projects
+s
+- **Project name:** Smart Travelling Recommendation System
+- **Problem or objective:** Provide a smart and personalized hotel recommendation system support booking accommodation online for travellers.
+- **Contribution:** Planned the system architecture design, focusing on database optimization and secure API design.
+- **Technologies:** System design, Databases, APIs
+- **Project URL:** `[Empty]`
+- **Repository URL:** https://github.com/TTKhiem/Travel-system
+- **Image and alt text:** `[Empty]`
+
+- **Project name:** Mental health web application
+- **Problem or objective:** Provide an online platform to support user mental health.
+- **Contribution:** Participated in system development as a full-stack developer.
+- **Technologies:** Python, Full-stack Web
+- **Project URL:** `[Empty]`
+- **Repository URL:** https://github.com/TTKhiem/Tuvantamly
+- **Image and alt text:** `[Empty]`

@@ -42,6 +42,7 @@
 
 .profile-hero__copy {
   display: grid;
+  min-width: 0;
   align-content: center;
   gap: var(--space-3);
 }
@@ -86,8 +87,47 @@
   grid-column: 1 / -1;
 }
 
+.skill-group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skill-group + .skill-group {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.skill-group h3 {
+  font-size: 1.15rem;
+}
+
+.education-meta,
+.project-tech {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.project-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.project-list a,
+.contact-links a {
+  overflow-wrap: anywhere;
+  font-weight: 750;
+}
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+}
+
 .project-placeholder {
   display: grid;
+  min-width: 0;
   gap: var(--space-2);
   padding: var(--space-4);
   border-radius: var(--radius-medium);
