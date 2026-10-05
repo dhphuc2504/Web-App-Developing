@@ -1,0 +1,18 @@
+{
+  "name": "exercise-02-student-list",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Server-rendered student list with Express, EJS, and JSON storage",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node --watch server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2"
+  }
+}
