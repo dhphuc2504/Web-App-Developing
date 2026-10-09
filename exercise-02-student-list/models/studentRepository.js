@@ -48,6 +48,7 @@ export function createStudentRepository(filePath) {
       const temporaryPath = `${filePath}.tmp`;
       await writeFile(temporaryPath, `${JSON.stringify(students, null, 2)}\n`, 'utf8');
       await rename(temporaryPath, filePath);
+      return students;
     });
     pending = operation.catch(() => {});
     return operation;
@@ -71,10 +72,10 @@ export function createStudentRepository(filePath) {
       return mutate(students => {
         if (!validPosition(position)) throw new ClassroomError('Choose a valid classroom seat.');
         if (revision !== layoutRevision(students)) {
-          throw new ClassroomError('The classroom changed since you opened it. Review the updated layout and try again.');
+          throw new ClassroomError('The classroom changed since you opened it. Review the updated layout and try again.', 409);
         }
         const student = students.find(student => student.id === id);
-        if (!student) throw new ClassroomError('This student is no longer in the list.');
+        if (!student) throw new ClassroomError('This student is no longer in the list.', 404);
         const occupant = students.find(item => seatKey(item.position) === seatKey(position));
         if (occupant && occupant !== student) occupant.position = student.position;
         student.position = position;

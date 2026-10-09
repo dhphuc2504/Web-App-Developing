@@ -2,17 +2,25 @@
   "name": "exercise-02-student-list",
   "version": "1.0.0",
   "private": true,
-  "description": "Server-rendered student list with Express, EJS, and JSON storage",
+  "description": "React client-rendered student list with Express and JSON storage",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
-    "start": "node --watch server.js",
-    "dev": "node --watch server.js",
+    "prestart": "npm run build",
+    "start": "node server.js",
+    "dev": "node scripts/dev.js",
+    "build": "vite build",
     "test": "node --test"
   },
   "dependencies": {
-    "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "express-session": "^1.18.2"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^7.1.0"
   }
 }

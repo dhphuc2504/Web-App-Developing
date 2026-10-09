@@ -1,89 +1,90 @@
-# Exercise 02 — Student List
+# Student List — React CSR
 
-A Node.js / Express application that renders HTML on the server with EJS. Student records and seat positions are stored in `data/Students.JSON`. Both pages render on the server. Small browser scripts enhance classroom gestures and the theme toggle; adding students and the move form work without JavaScript.
+This folder was converted from the Block 3 SSR exercise to React client-side rendering. The original SSR submission remains in the ZIP at the repository root. All existing student records and positions are preserved.
 
 ## Run
 
-Requires Node.js 20 or newer. From the repository root:
+Requires Node.js 22.12 or newer.
 
 ```sh
 cd exercise-02-student-list
 npm install
+npm run dev
+```
+
+Open **http://localhost:3000/Student** or **http://localhost:3000/Classroom**. Express hosts both the API and Vite development middleware on one port. Vite updates React components during development; a small Node watcher monitors only backend source files, avoiding restart loops from Vite cache updates. The default port is 3000; set `PORT` to use another port.
+
+For a production build:
+
+```sh
 npm start
 ```
 
-Open **http://localhost:3000/Student** or **http://localhost:3000/Classroom**. Both `npm start` and `npm run dev` restart the server when source files change. After upgrading from a running older version, stop that server once and start it again with `npm start`. Set `PORT` to use another port. Run `npm test` for the automated integration tests.
+The `prestart` script builds React into `dist/`, then Express serves those static files. `npm run build` builds separately. Set `PORT` to change the port. `STUDENTS_FILE` can point to an alternate JSON file for isolated manual testing; the default is `data/Students.JSON`.
 
-## Routes and SSR flow
+## Features
 
-| Route | Behavior |
-| --- | --- |
-| `GET /Student` | Reads the JSON file and renders the student directory and add form. |
-| `POST /AddStudent` | Validates the form, saves a valid new student, and redirects with HTTP 303 to `/Student`. |
-| `GET /Classroom` | Renders students at their saved classroom seats, with information popups and movement controls. |
-| `POST /Classroom/Move` | Validates and saves a move or swap, then redirects with HTTP 303 to `/Classroom`. |
+- Student table and form with IDs `ST001`–`ST999`, normalized names and emails, and duplicate checks.
+- Classroom cards arranged from saved positions. Drag to a vacant seat or onto another student to swap; click selection and a keyboard-accessible move form provide alternatives.
+- Student details on hover or focus; Escape dismisses details and clears selection.
+- Light/dark toggle with browser-local preference.
+- Loading, saving, empty, success, and error states; Refresh list retrieves current server records.
+- JSON storage, serialized writes, and atomic file replacement within one server process.
 
-1. Express receives a form submission containing `id`, `name`, `email`, and the hidden form token.
-2. The controller calls the validator; the repository checks uniqueness and writes the JSON file.
-3. The server stores feedback in the session and redirects to `GET /Student` (Post/Redirect/Get).
-4. The GET reads the updated file and renders a complete new HTML page. The browser immediately displays the updated list. Existing pages in other browsers update on their next request; there is no live push or client-side rendering.
-
-Both successful and rejected submissions redirect, so refreshing the resulting page does not re-post the form. Invalid input is preserved with field errors. A session form token rejects stale or replayed successful submissions. Duplicate IDs and emails are also rejected, including simultaneous submissions.
-
-## Validation
-
-- **ID:** `ST001`–`ST999` (ST followed by exactly three digits; ST000 is rejected); stored in uppercase; unique ignoring case.
-- **Name:** 2–100 characters after trimming and collapsing whitespace; supports Unicode names; rejects remaining control characters.
-- **Email:** basic email format, up to 254 characters; trimmed, stored in lowercase, and unique ignoring case. Format validation does not verify that a mailbox exists.
-- HTML input constraints assist users; server validation also applies when those constraints are bypassed. EJS escapes displayed values.
-
-## Code organization
+## Architecture
 
 ```text
-app.js                         Express setup and error handling
-server.js                      Starts the HTTP server
-routes/students.js             Student and classroom routes
-controllers/studentController.js  Student request handling and view data
-controllers/classroomController.js Classroom request handling and feedback
-validation/student.js          Input normalization and validation
-models/studentRepository.js    JSON reads, uniqueness checks, moves, and writes
-models/classroom.js            Seat rules, automatic placement, and classroom view data
-views/                         EJS markup and presentation-only loops/conditions
-public/styles.css              Responsive styles and theme colors
-public/classroom.js            Pointer dragging, click selection, and popups
-public/theme.js                Light/dark preference, saved in localStorage
-data/Students.JSON             Persisted students and classroom positions
-tests/students.test.js          Integration tests using temporary data
+server.js                      HTTP server, Vite integration, static React shell
+app.js                         Express JSON middleware and error handling
+routes/students.js             JSON endpoint definitions
+controllers/studentController.js Validation orchestration and JSON responses
+models/studentRepository.js    JSON storage, uniqueness checks, moves and swaps
+models/classroom.js            Seat limits, vacant-seat assignment, revisions
+validation/student.js          Shared browser/server input normalization and validation
+client/index.html              Empty React shell, initial theme
+client/src/main.jsx            Mounts React in the browser
+client/src/App.jsx             Navigation, data state, loading, requests and feedback
+client/src/api.js              Fetch wrapper and API errors
+client/src/components/         Header, StudentForm, StudentTable, Classroom
+client/src/styles.css          Responsive layouts and theme tokens
+vite.config.js                 React build configuration
+data/Students.JSON            Student records and positions
+tests/students.test.js         API integration tests with temporary storage
 ```
 
-The template only displays prepared values. It does not validate, modify records, or access storage. Writes are serialized within one Node process and replace the JSON file atomically. Malformed existing data produces an error instead of being overwritten.
+There are no EJS templates or server-rendered student markup. Initial HTML contains the React root; React fetches data and builds the table and classroom in the browser. Navigation uses browser history, and direct page links serve the same shell. Creating or moving a student sends JSON and updates React state from the confirmed response without a document reload.
 
-This is a local course exercise: run one server process. Sessions use Express's in-memory session store and expire after one hour; restarting clears sessions but preserves students. `SESSION_SECRET` can supply a stable session signing secret. A deployed service would require a persistent session store and coordination for storage writes across processes.
+## API
 
-Reference documentation: [Express](https://expressjs.com/en/5x/api/) and [EJS](https://ejs.co/).
+| Method | URL | Behavior |
+| --- | --- | --- |
+| GET | `/api/students` | Returns students, layout revision, and classroom dimensions. |
+| POST | `/api/students` | Validates and creates a student; returns 201 and the updated snapshot. |
+| PATCH | `/api/students/:id/position` | Moves/swaps a student and returns the updated snapshot. |
 
-## Classroom positions
+Create body: `{ "id": "ST007", "name": "Example Student", "email": "student@example.com" }`.
 
-Open **http://localhost:3000/Classroom** or use the navigation links. The student management page retains the form and table, with a position column added.
+Move body: `{ "row": 2, "column": 3, "revision": "<revision from GET>" }`.
 
-Each record has a one-based position:
+Responses include `students`, `revision`, and `classroom: { columns: 6, maxRows: 50 }`. Mutation responses also include `message`. Errors return `message` and optional field `errors`: 422 for invalid input, 409 for duplicates/stale revisions/full room, 404 for missing students/routes, and 500 for storage failures. Write endpoints require JSON; malformed JSON returns 400 and oversized bodies return 413.
 
-```json
-{
-  "id": "ST001",
-  "name": "Example Student",
-  "email": "student@example.com",
-  "position": { "row": 1, "column": 1 }
-}
+## Validation and persistence
+
+Browser HTML constraints and the shared validator provide immediate feedback. The server repeats validation and checks uniqueness before saving. IDs normalize to uppercase and exclude ST000; names trim and collapse whitespace to 2–100 characters; emails normalize to lowercase with basic format checks and a maximum of 254 characters. The server accepts only integer seats within rows 1–50 and columns 1–6.
+
+New students receive the first vacant seat. Older records without positions are assigned deterministic vacant seats and persisted on the next write. Malformed JSON or invalid/overlapping saved positions produce an error instead of being overwritten.
+
+Buttons lock while requests are pending. Retried additions are protected by uniqueness checks. Classroom updates include a revision to reject conflicting changes; the browser refreshes records on a 409 conflict. Network errors retain form values and recommend refreshing before retrying. React escapes displayed text. No Post/Redirect/Get or session flash messages are needed in this CSR version.
+
+This course app has no authentication, database, or API gateway. Run one server process; sharing JSON storage between processes would require coordination. Other open tabs retrieve changes when refreshed or when navigating between pages.
+
+## Verification
+
+```sh
+npm test
+npm run build
 ```
 
-The classroom has six columns and up to 50 rows (300 seats). At least four rows are shown, with an additional row after the last occupied row as space allows. New students get the first vacant seat, scanning rows from the front. Legacy records without positions get deterministic vacant seats; these positions are persisted on the next successful write. The two existing students have explicit starting positions.
+Integration tests cover JSON responses, validation, duplicates, persistence, legacy positions, swaps, stale revisions, concurrent requests, invalid content, and corrupted storage. They use temporary files and do not modify the exercise records.
 
-- Drag a card to an empty seat to move it, or onto an occupied seat to swap students. Pointer gestures support a mouse and touch.
-- Alternatively, click a student and then a destination seat. Keyboard users can activate the same buttons or use the student/row/seat form below the classroom; the form also works without JavaScript.
-- Hover or focus a card to show the student's ID, name, email, and seat. Escape dismisses the popup and clears selection.
-- Moves submit a normal HTML form. The server checks the session token, seat bounds, student existence, and a revision of the displayed layout, then saves and redirects to a new server-rendered page. Replayed or conflicting changes show feedback without overwriting the newer layout.
-- Positions remain in the JSON file after restarting. Existing pages in other browsers refresh on their next request.
-- The theme toggle appears on both pages. Its preference persists in browser localStorage and follows the system preference until the user chooses a theme.
-
-Run `npm test` to cover student validation and persistence, legacy seat assignment, moves, swaps, invalid requests, concurrent updates, and corrupted data. Tests use temporary JSON files and leave the exercise's student data intact.
+Reference documentation: [React](https://react.dev/learn/build-a-react-app-from-scratch), [Vite](https://vite.dev/guide/), and [Express](https://expressjs.com/en/5x/api/).

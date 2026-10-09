@@ -1,37 +1,28 @@
 import express from 'express';
-import session from 'express-session';
-import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { createStudentRepository } from './models/studentRepository.js';
+import { createStudentRepository, DuplicateStudentError } from './models/studentRepository.js';
+import { ClassroomError } from './models/classroom.js';
 import { studentRoutes } from './routes/students.js';
 
-export function createApp({
-  dataFile = fileURLToPath(new URL('./data/Students.JSON', import.meta.url)),
-  sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
-} = {}) {
+export function createApp({ dataFile = fileURLToPath(new URL('./data/Students.JSON', import.meta.url)) } = {}) {
   const app = express();
   app.disable('x-powered-by');
-  app.set('view engine', 'ejs');
-  app.set('views', fileURLToPath(new URL('./views', import.meta.url)));
-  app.use('/assets', express.static(fileURLToPath(new URL('./public', import.meta.url))));
-  app.use(express.urlencoded({ extended: false, limit: '10kb' }));
-  app.use(session({
-    secret: sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 1000 },
-  }));
-  app.use(studentRoutes(createStudentRepository(dataFile)));
-  app.use((_req, res) => res.status(404).render('error', {
-    title: 'Page not found', message: 'Visit the student list to view or add students.',
-  }));
+  app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
+  app.use('/api', (req, res, next) => {
+    if (['POST', 'PATCH'].includes(req.method) && !req.is('application/json')) {
+      return res.status(415).json({ message: 'Send the request as application/json.' });
+    }
+    next();
+  });
+  app.use(express.json({ limit: '10kb' }));
+  app.use('/api/students', studentRoutes(createStudentRepository(dataFile)));
+  app.use('/api', (_req, res) => res.status(404).json({ message: 'API route not found.' }));
   app.use((error, _req, res, _next) => {
+    if (error instanceof DuplicateStudentError) return res.status(409).json({ message: 'A student with these details already exists.', errors: error.errors });
+    if (error instanceof ClassroomError) return res.status(error.status).json({ message: error.message });
+    if (error.status === 400 || error.status === 413) return res.status(error.status).json({ message: error.status === 413 ? 'The request is too large.' : 'Invalid JSON request.' });
     console.error(error);
-    const status = error.status === 413 ? 413 : error.status === 400 ? 400 : 500;
-    res.status(status).render('error', {
-      title: status === 500 ? 'Something went wrong' : 'Invalid request',
-      message: status === 500 ? 'The student list could not be loaded. Please try again later.' : 'The submitted form could not be read. Please return to the student list.',
-    });
+    res.status(500).json({ message: 'Unable to access student data. Please try again.' });
   });
   return app;
 }

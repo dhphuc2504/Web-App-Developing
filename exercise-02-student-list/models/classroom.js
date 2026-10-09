@@ -15,22 +15,12 @@ export function firstFreePosition(students) {
       if (!occupied.has(seatKey({ row, column }))) return { row, column };
     }
   }
-  throw new ClassroomError('The classroom is full (300 seats).');
+  throw new ClassroomError('The classroom is full (300 seats).', 409);
 }
 
-export class ClassroomError extends Error {}
-
-export function classroomView(students) {
-  const rows = Math.min(MAX_ROWS, Math.max(4, ...students.map(student => student.position.row + 1)));
-  const occupants = new Map(students.map(student => [seatKey(student.position), {
-    ...student, initial: Array.from(student.name)[0] || '?',
-  }]));
-  const seats = [];
-  for (let row = 1; row <= rows; row++) {
-    for (let column = 1; column <= COLUMNS; column++) {
-      const position = { row, column };
-      seats.push({ ...position, label: `Row ${row}, seat ${column}`, student: occupants.get(seatKey(position)) });
-    }
+export class ClassroomError extends Error {
+  constructor(message, status = 422) {
+    super(message);
+    this.status = status;
   }
-  return { seats, revision: layoutRevision(students) };
 }

@@ -40,8 +40,8 @@
     "name": "Nguyen Van A",
     "email": "anh@gmail.com",
     "position": {
-      "row": 1,
-      "column": 5
+      "row": 2,
+      "column": 4
     }
   },
   {
@@ -51,6 +51,15 @@
     "position": {
       "row": 1,
       "column": 3
+    }
+  },
+  {
+    "id": "ST123",
+    "name": "messi",
+    "email": "iloveronaldo@yahoo.com",
+    "position": {
+      "row": 1,
+      "column": 4
     }
   }
 ]
