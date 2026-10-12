@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas = ["restaurant"]
+}
+
+model StaffUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(254)
+  passwordHash String   @map("password_hash")
+  displayName  String   @map("display_name") @db.VarChar(100)
+  role         String   @db.VarChar(10)
+  isActive     Boolean  @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  recipes      Recipe[]
+  operations   StockOperation[]
+  @@map("staff_users")
+  @@schema("restaurant")
+}
+
+model Category {
+  id           String @id @default(uuid()) @db.Uuid
+  name         String @db.VarChar(100)
+  slug         String @unique @db.VarChar(120)
+  description  String?
+  displayOrder Int @default(0) @map("display_order")
+  isActive     Boolean @default(true) @map("is_active")
+  archivedAt   DateTime? @map("archived_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  dishes       Dish[]
+  @@map("categories")
+  @@schema("restaurant")
+}
+
+model Dish {
+  id           String @id @default(uuid()) @db.Uuid
+  categoryId   String @map("category_id") @db.Uuid
+  name         String @db.VarChar(150)
+  slug         String @unique @db.VarChar(180)
+  description  String?
+  priceMinor   BigInt @map("price_minor")
+  currency     String @default("VND") @db.VarChar(3)
+  imagePath    String? @map("image_path")
+  imageAlt     String? @map("image_alt") @db.VarChar(200)
+  isFeatured   Boolean @default(false) @map("is_featured")
+  isPublished  Boolean @default(false) @map("is_published")
+  isAvailable  Boolean @default(true) @map("is_available")
+  displayOrder Int @default(0) @map("display_order")
+  archivedAt   DateTime? @map("archived_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  recipe       Recipe?
+  @@index([categoryId, isPublished])
+  @@map("dishes")
+  @@schema("restaurant")
+}
+
+model Ingredient {
+  id                String @id @default(uuid()) @db.Uuid
+  name              String @unique @db.VarChar(150)
+  description       String?
+  baseUnit          String @map("base_unit") @db.VarChar(10)
+  quantityOnHand    Decimal @default(0) @map("quantity_on_hand") @db.Decimal(14, 3)
+  lowStockThreshold Decimal @default(0) @map("low_stock_threshold") @db.Decimal(14, 3)
+  isActive          Boolean @default(true) @map("is_active")
+  archivedAt        DateTime? @map("archived_at") @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  recipeItems       RecipeItem[]
+  movements         StockMovement[]
+  @@map("ingredients")
+  @@schema("restaurant")
+}
+
+model Recipe {
+  id                 String @id @default(uuid()) @db.Uuid
+  dishId             String @unique @map("dish_id") @db.Uuid
+  instructions       String @default("")
+  preparationMinutes Int? @map("preparation_minutes")
+  cookingMinutes     Int? @map("cooking_minutes")
+  version            Int @default(1)
+  updatedBy          String @map("updated_by") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  dish               Dish @relation(fields: [dishId], references: [id], onDelete: Restrict)
+  editor             StaffUser @relation(fields: [updatedBy], references: [id], onDelete: Restrict)
+  items              RecipeItem[]
+  operations         StockOperation[]
+  @@map("recipes")
+  @@schema("restaurant")
+}
+
+model RecipeItem {
+  recipeId     String @map("recipe_id") @db.Uuid
+  ingredientId String @map("ingredient_id") @db.Uuid
+  quantity     Decimal @db.Decimal(14, 3)
+  notes        String? @db.VarChar(250)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  recipe       Recipe @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  @@id([recipeId, ingredientId])
+  @@index([ingredientId])
+  @@map("recipe_items")
+  @@schema("restaurant")
+}
+
+model StockOperation {
+  id            String @id @default(uuid()) @db.Uuid
+  type          String @db.VarChar(12)
+  reason        String
+  recipeId      String? @map("recipe_id") @db.Uuid
+  recipeVersion Int? @map("recipe_version")
+  servings      Int?
+  createdBy     String @map("created_by") @db.Uuid
+  requestKey    String @unique @map("request_key") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  recipe        Recipe? @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  actor         StaffUser @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  movements     StockMovement[]
+  @@index([createdAt])
+  @@map("stock_operations")
+  @@schema("restaurant")
+}
+
+model StockMovement {
+  id             String @id @default(uuid()) @db.Uuid
+  operationId    String @map("operation_id") @db.Uuid
+  ingredientId   String @map("ingredient_id") @db.Uuid
+  quantityDelta  Decimal @map("quantity_delta") @db.Decimal(14, 3)
+  quantityBefore Decimal @map("quantity_before") @db.Decimal(14, 3)
+  quantityAfter  Decimal @map("quantity_after") @db.Decimal(14, 3)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  operation      StockOperation @relation(fields: [operationId], references: [id], onDelete: Restrict)
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  @@unique([operationId, ingredientId])
+  @@index([ingredientId, createdAt])
+  @@map("stock_movements")
+  @@schema("restaurant")
+}
+
+model Session {
+  sid       String @id @db.VarChar(36)
+  data      String
+  expires   DateTime @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  @@index([expires])
+  @@map("sessions")
+  @@schema("restaurant")
+}
