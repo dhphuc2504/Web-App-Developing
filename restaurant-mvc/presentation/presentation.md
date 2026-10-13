@@ -5,9 +5,9 @@ Presentation material prepared 13 October 2026.
 
 The HTML companion contains **16 main slides**, editable SVG diagrams, embedded screenshots, speaker notes and a reference appendix. It works offline as a single file. Open `presentation.html` in a browser; use arrow keys, Home/End, **N** for notes and **F** for fullscreen. Click a screenshot to enlarge it. The Print button includes the slides and appendix; these Markdown notes are the fuller rehearsal document.
 
-Suggested timing: 10–12 minutes for the slides, then around 3 minutes for a prepared demo. Suggested division: presenter 1 covers slides 1–6 (website review), presenter 2 covers slides 7–11 (scope, architecture and database), presenter 3 covers slides 12–16 (HTTP, roles, inventory, verification and demo). Adjust to your team; no individual assignments are assumed.
+Suggested timing: 10–12 minutes for the slides, then around 3 minutes for a prepared demo. Suggested division: presenter 1 covers slides 1–6 (website review), presenter 2 covers slides 7–11 (scope, architecture and database), presenter 3 covers slides 12–16 (HTTP, roles, inventory, verification and demo). Presenter assignments are optional and follow the website-first narrative.
 
-Screenshots show the implemented UI with disposable sample records. Restaurant and food artwork are generated assets, not photographs of a real venue. Credentials are excluded. The actual `.env` was not read or copied.
+Screenshots show the implemented UI with disposable sample records. Restaurant and food artwork are generated assets, not photographs of a real venue. Credentials are excluded. Local environment configuration is outside the presentation package.
 
 ## Main presentation
 
@@ -17,7 +17,7 @@ Santaishi-tei is the restaurant identity chosen for the Tam Thái Tử group. Th
 
 **Speaker notes**
 
-Introduce the group and pronounce the chosen name, Santaishi-tei. Explain that this is a database exercise presented through a Japanese restaurant setting. The public experience introduces the restaurant and lets people browse dishes. Behind it, chefs maintain recipes and record ingredient use, while administrators manage the catalog, stock and chef access. The architecture was built first and the visual experience was refined afterward. Suggested timing is 10–12 minutes for the slides and about 3 minutes for a prepared live demonstration. The presentation reviews the completed website first, then explains scope, architecture, database, HTTP, roles and inventory. Suggested presenter responsibilities follow that order; these are not named team assignments.
+Santaishi-tei is the restaurant identity selected for the Tam Thái Tử group. The coursework combines a public restaurant introduction and menu with authenticated staff tools. Chefs maintain dishes and recipes and record ingredient use. Administrators manage the catalog, stock receipts, corrections and chef access. Development began with the database and backend, followed by the Japanese visual experience. The presentation reviews the completed website first, then explains the application workflow, development process, architecture, database and HTTP behavior. The final section presents verification evidence and a demonstration of the implemented workflow.
 
 **Project evidence:** `README.md`, `public/images/japan/ASSETS.md`.
 
@@ -46,7 +46,7 @@ flowchart TD
 
 **Speaker notes**
 
-Show the architectural background and explain the spatial navigation. The initial entrance feels like stepping into the restaurant because the native door panels slide open. Inside the house, arrows guide visitors toward the three destinations without placing unrelated boxes over the room. Keyboard focus reveals labels as hover does; phones show them continuously. Kitchen and office links lead to authentication when required. Cross-room travel uses a short turn and step animation, with about 210 milliseconds on exit and 240 on arrival. It is deliberately brief to keep navigation responsive. Motion is skipped for reduced-motion preferences. The screenshots show the implemented interface; the restaurant setting is generated artwork, not a photograph of a real venue.
+The exterior introduces the restaurant through a shoji entrance door. The house places dining to the left, the kitchen to the right and the administrator office ahead. Floor arrows integrate guidance into the setting. Labels appear on hover or keyboard focus and remain visible on phones. Protected destinations require staff authentication and the correct role. Room changes use a brief POV turn and step, approximately 210 milliseconds on exit and 240 on arrival. Kitchen subpages use ordinary navigation. Reduced-motion preferences skip movement. The architectural setting is generated artwork, while the screenshots show the implemented website.
 
 **Project evidence:** `src/views/public/`, `public/js/`, `public/images/japan/ASSETS.md`.
 
@@ -62,7 +62,7 @@ Customers browse a menu book against a dining-table background, with four dishes
 
 **Speaker notes**
 
-Describe the dining flow: enter, open the menu, filter or sort, turn a page, then select a dish. The backend renders the spread and applies the public visibility rules. Draft and archived dishes are excluded; availability can still be shown for published dishes. JavaScript animates server-rendered content instead of building an independent client database. The turn was slowed after feedback because the earlier version felt too fast to resemble a physical page. It now has a front and back face, directional reversal and moving shadows. Rapid clicks are cleaned up rather than stacking animation state. Opening a dish uses a popup for convenience, with a normal details URL as fallback. Use the live demo to show motion; a still image cannot prove animation timing.
+The public dining flow includes menu browsing, category and search filters, sorting, pagination and dish details. The backend renders each spread and applies public visibility rules. Draft and archived dishes do not appear in the public menu. A published dish can display its availability state. Browser JavaScript adds a two-sided page turn with forward/backward direction and moving shadows. The accepted turn duration is 800 milliseconds. Selecting a dish opens a dialog, with a normal details URL available as a fallback. Server-rendered pages remain accessible through standard navigation. Animation timing is demonstrated in the live application.
 
 **Project evidence:** `src/controllers/public-controller.js`, `src/views/public/`, `public/js/`, `README.md`.
 
@@ -78,7 +78,7 @@ The kitchen presents dishes as clipped tickets with published, draft and availab
 
 **Speaker notes**
 
-A chef sees dish tickets and can edit a dish or recipe sheet, create another dish, or archive a dish with confirmation. The visual metaphor is paper taken off a board and written on, while the form and authorization still belong to the server. A sheet returns only after a successful save; failed validation keeps the entered values visible. Recipe editing includes ingredient quantities per serving, preparation notes and Add/Remove controls. The final audit ensured existing ingredients beyond the first 100 pantry results remain available and fields cannot be changed while a save is pending. This is a catalog and preparation workspace, so the board does not process customer orders. Stock is deducted only when usage is recorded, not when the recipe is edited.
+The kitchen presents catalog dishes as clipped tickets. Chefs and administrators can create, edit or archive dishes, and maintain their per-serving recipes. Editing opens a server-rendered paper sheet. A confirmed save returns the sheet to the board, while validation errors preserve submitted values. Recipe forms contain ingredient quantities, preparation notes and Add/Remove controls. Existing recipe ingredients remain selected even when they fall outside the first 100 pantry results. Form fields lock while saving. This workspace maintains the dish catalog and preparation information. Stock changes require a separate usage or waste action, and the board does not process customer orders.
 
 **Project evidence:** `src/controllers/kitchen-controller.js`, `src/views/kitchen/`, `public/js/`, `README.md`.
 
@@ -94,7 +94,7 @@ Ingredient jars, search, low-stock filtering and an alternate list view make pan
 
 **Speaker notes**
 
-The pantry addresses the team’s question about how ingredient management should feel in the restaurant. Jar labels make names, units and low balances visible, while a list view supports more practical scanning. A ledger opens from the ingredient and shows current stock, recipes that use it and the latest 30 movements. The journal shows the latest 100 operations. Chefs record usage or waste; administrators receive ingredients or correct counts with a reason. In the office, the administrator creates and updates chef accounts. Access removal uses DELETE and deactivation so historical editors and stock actors remain traceable. The screenshots use fictional Sample Administrator and Sample Chef records, not actual staff accounts or credentials.
+The pantry combines visual jar labels with an alternate list view, search and low-stock filtering. An ingredient ledger displays the current balance, recipe references and the latest 30 movements. The stock journal displays the latest 100 operations. Chefs can record usage or waste, while administrators can also receive stock, correct counts and edit ingredient metadata. The office provides chef-account creation, profile updates and access removal. Access removal uses DELETE and deactivates the account while retaining historical references. Sample Administrator and Sample Chef are fictional screenshot records. Credentials and actual staff records are excluded from the presentation package.
 
 **Project evidence:** `src/views/kitchen/`, `src/views/auth/`, `src/controllers/`, `README.md`.
 
@@ -114,21 +114,51 @@ The visual direction evolved through feedback: semi-3D trays became a menu book 
 
 **Speaker notes**
 
-This slide shows the decisions rather than suggesting the first proposal was the final design. Customers initially viewed dishes on semi-3D trays with hover information. Feedback preferred a menu on a dining table and dish popups triggered by a click. The kitchen gained a generated backdrop, clipped dish tickets and a paper editor. Ingredient management became a pantry shelf with a list alternative and ledger. House guidance moved through boxes and small signs before the team accepted arrows projected onto the floor. Repeated door effects and buggy text were removed from room switches. Later feedback slowed the menu turn to 800 milliseconds and preserved the kitchen. The final name reflects Tam Thái Tử and appears consistently across the UI.
+The design evolved through approved feedback. The original semi-3D dish trays became a menu book on a dining-table background with click-based dish details. Kitchen tickets and paper editing gained a Japanese backdrop. Ingredient management became a pantry shelf with a list alternative and ledger. House guidance progressed from boxes to hanging signs, then to floor arrows. Repeated door effects were replaced with entrance-only sliding doors and short POV room transitions. The menu turn was slowed to 800 milliseconds, while the accepted kitchen design remained unchanged. The final restaurant identity, 三太子亭 — Santaishi-tei, represents Tam Thái Tử throughout the interface.
 
 **Project evidence:** `docs/ui-revision.md`, `README.md`, `public/js/`.
 
 ---
 
-## Slide 07 — The exercise scope
+## Slide 07 — Application workflow
 
-Customers browse anonymously. Chefs maintain dishes and recipes, see inventory, and record usage/waste. Administrators also manage categories, ingredient metadata, receipts, corrections and chef accounts. Ordering, bookings and customer account features were explicitly removed from scope.
+Customers enter the restaurant, browse the menu, inspect a dish and return to browsing without an account. Chefs sign in to maintain dishes and recipes, view inventory, and record usage or waste. Administrators additionally manage chef access, categories and ingredient metadata, receive stock and correct counts.
+
+```mermaid
+flowchart LR
+  subgraph Public[Customer]
+    A[Restaurant entrance] --> B[House directory]
+    B --> C[Menu search and sorting]
+    C --> D[Dish details]
+    D --> C
+  end
+  subgraph Kitchen[Chef or administrator]
+    E[Staff login] --> F[Kitchen dish board]
+    F --> G[Maintain dishes and recipes]
+    F --> H[Record preparation usage or waste]
+    H --> I[Ingredient ledger and stock journal]
+  end
+  subgraph Office[Administrator]
+    J[Staff login] --> K[Administrator office]
+    K --> L[Manage chef accounts and catalog]
+    K --> M[Receive stock or correct counts]
+    M --> N[Ingredient ledger and stock journal]
+  end
+  B -. Staff rooms .-> E
+  B -. Office .-> J
+```
+
+![Application workflow for customers, chefs and administrators](presentation-assets/application-workflow.svg)
+
+The SVG provides a portable view of the workflow. The Mermaid source above retains its editable branching structure.
+
+Recipe editing changes the per-serving specification. Usage, waste, receipts and corrections change stock balances and write movement history. Staff routes enforce authentication and role permissions on the server. Ordering, bookings and customer registration remain outside scope.
 
 **Speaker notes**
 
-The first important decision was narrowing the product. A broad restaurant management proposal initially suggested customer accounts and ordering or booking, but the team clarified that the public website should introduce the restaurant. Customer therefore means an anonymous visitor, not a registered user. Only chefs and administrators sign in. Kitchen management was clarified as maintaining recipes and manually recording usage or waste. An order-board visual style remains useful for displaying dish tickets, but there is no customer order workflow behind it. This scope decision explains why the schema has recipes and stock movements without users, orders, reservations or restaurant CMS sections.
+Customers enter through the door, use the house directory, browse or filter the menu, inspect a dish and return to browsing. Customer registration, ordering and reservations are outside scope. Staff authenticate with an active account before entering protected tools. Chefs maintain dishes and per-serving recipes and record usage or waste through a separate stock action. Recipe saves do not deduct ingredients. Stock actions update balances and write immutable ledger entries together. Administrators additionally manage chef access, categories and ingredient metadata, receive stock and correct counts. Dashed arrows in the SVG identify separate tasks. The server enforces authentication and role permissions on each request.
 
-**Project evidence:** `AGENTS.md`, `README.md`.
+**Project evidence:** `README.md`, `src/routes/index.js`, `src/middleware/security.js`, `src/services/stock-service.js`.
 
 ---
 
@@ -148,7 +178,7 @@ flowchart LR
 
 **Speaker notes**
 
-Walk through the phases in order. We first settled the public scope, roles and meaning of kitchen management. With no initial tables, we defined a Prisma schema and versioned migrations. The backend used minimal pages so forms, permissions and transactions could be tested before investing in artwork. The next phase introduced the Japanese exterior, house, dining room, kitchen, pantry and office. Feedback changed the menu, recipe editing, guidance and motion. The final pass revisited the original technical requirements and corrected bugs rather than assuming that visual changes left every behavior intact. This workflow separates product decisions from implementation and verification without turning them into separate projects.
+Development began with agreement on the public scope, roles and meaning of kitchen management. The code-first Prisma schema and versioned migrations defined the initial database. A minimal interface supported early checks of forms, permissions and transactions. Isolated database and HTTP tests preceded the detailed visual phase. The Japanese exterior, house, dining room, kitchen, pantry and office then developed through feedback. Revisions changed the menu, paper editing, guidance and motion while preserving the backend requirements. The final audit rechecked the original technical requirements and corrected bugs. This process connects product decisions, implementation and verification.
 
 **Project evidence:** `README.md`, `docs/ui-revision.md`, `tests/`.
 
@@ -156,11 +186,11 @@ Walk through the phases in order. We first settled the public scope, roles and m
 
 ## Slide 09 — Backend decisions
 
-Use JavaScript rather than TypeScript, as requested. Express and EJS implement SSR. Prisma 7 with PrismaPg connects to Supabase PostgreSQL. Models and versioned migrations define the database before deployment. Static restaurant copy stays in EJS instead of restaurant_settings or content_sections tables. Credentials are private and ignored by Git.
+The backend uses JavaScript. Express and EJS implement SSR. Prisma 7 with PrismaPg connects to Supabase PostgreSQL. Models and versioned migrations define the database before deployment. Static restaurant copy stays in EJS instead of restaurant_settings or content_sections tables. Credentials are private and ignored by Git.
 
 **Speaker notes**
 
-The team explicitly chose JavaScript, Supabase, Prisma, code-first development, MVC and PRG. Express and EJS are supporting implementation choices that fit those requirements. Code-first does not mean tables appear merely by starting the server: models describe the desired schema, and reviewed migrations create it in PostgreSQL. The runtime database URL is for application queries, while the migration connection is used by migration tooling; actual values never belong in this presentation. Static restaurant content is edited in templates because this exercise does not need a CMS. Supabase is used as PostgreSQL hosting, while the Express server is the application access boundary. No Supabase API key is needed for this Prisma backend.
+The selected requirements were JavaScript, Supabase, Prisma, code-first development, MVC and PRG. Express and EJS provide the HTTP server and server-rendered views. Prisma models describe the database, and versioned migrations create or update its PostgreSQL tables. The runtime database connection serves application queries, while a migration connection serves schema deployment. Credentials remain in local environment configuration. Static restaurant content belongs in templates because the project has no CMS editing requirement. Supabase hosts PostgreSQL, and the Express server controls application access. The Prisma backend does not require a Supabase API key.
 
 **Project evidence:** `README.md`, `package.json`, `prisma/schema.prisma`.
 
@@ -188,7 +218,7 @@ flowchart LR
 
 **Speaker notes**
 
-Follow a menu request or recipe form through the diagram. Routes identify the resource; middleware restores the session and checks access or CSRF when needed. Controllers coordinate HTTP input, validation and responses. Services implement business rules and transactions. Models or repositories hold data access, with Prisma connecting to PostgreSQL. Service results return to the controller, which renders the EJS view and sends HTML. Menu turns and recipe sheets use JavaScript to fetch SSR HTML and animate a fragment. This preserves SSR because the browser does not become the authoritative renderer or the permission layer. With JavaScript disabled, ordinary links and form submissions still work.
+Routes identify each HTTP resource. Middleware restores sessions and checks authentication, roles and CSRF where required. Controllers coordinate input validation, service calls and responses. Services implement business rules and transactions. Models and repositories use Prisma to access PostgreSQL. Service results return to the controller, which renders EJS and sends HTML to the browser. Menu turns and recipe sheets request server-rendered HTML and animate the relevant fragment. The server remains responsible for content rendering, validation and permissions. Standard links and form submissions continue to work without browser JavaScript.
 
 **Project evidence:** `src/app.js`, `src/routes/index.js`, `src/controllers/`, `src/services/`, `src/models/`, `src/views/`.
 
@@ -218,7 +248,7 @@ erDiagram
 
 **Speaker notes**
 
-Explain the model groups rather than reading every field. Categories and dishes form the public catalog. Each dish can have one recipe, and RecipeItem is a composite-key join table containing quantity per serving. Ingredient stores the current balance and low-stock threshold. StockOperation is the business event header; StockMovement stores before, delta and after for each ingredient. StaffUser links editors and stock actors to the audit trail. Session stores login session data and expiry; it has no staff foreign key because identity is inside the session payload. There are nine application tables plus Prisma migration metadata. Money is integer VND and stock quantities use exact decimals. Catalog DELETE actions archive records; removing a chef deactivates access while preserving history.
+Categories and dishes form the public catalog. Each dish can have one recipe, and RecipeItem joins recipes to ingredients with a quantity per serving. Ingredient stores the current balance and low-stock threshold. StockOperation records the event header, and StockMovement records each ingredient balance before the event, its delta and the resulting balance. StaffUser identifies recipe editors and stock actors. Session stores the session payload and expiry without a staff foreign key. The schema contains nine application models plus Prisma migration metadata. Prices use integer VND and quantities use exact decimals. Catalog archives and staff deactivation preserve historical references.
 
 **Project evidence:** `prisma/schema.prisma`, `prisma/migrations/`.
 
@@ -256,7 +286,7 @@ The browser sends POST; method override selects the Express DELETE route. The re
 
 **Speaker notes**
 
-HTML forms support GET and POST, so the browser submits POST to the resource URL with a hidden method override. The server changes only a POST body value equal to DELETE into the DELETE request method; query parameters, headers and GET overrides are ignored. CSRF and role checks remain in force. After a successful archive, the response is 303 See Other with a collection Location, and the browser issues GET. Refresh repeats that GET instead of resubmitting the archive. The example token is a placeholder, not a real session value. PRG is for successful mutations: invalid input is shown with 422 and conflicts with 409 so the user can recover. Archive/deactivate behavior preserves historical data.
+Native HTML forms support GET and POST. Archive and deactivation forms submit POST with a hidden _method=DELETE field and a session-bound CSRF token. The server accepts DELETE overrides from the POST body only. Query-string, header and GET overrides cannot trigger deletion. The DELETE resource route still applies role and CSRF checks. After success, a 303 See Other response supplies a collection Location and the browser follows with GET. Refreshing the resulting page repeats GET. Validation failures return 422 with submitted values retained, and conflicts return 409. The sample CSRF value in this document is a placeholder.
 
 **Project evidence:** `src/app.js`, `src/routes/index.js`, `src/middleware/security.js`, `src/views/`, `tests/`.
 
@@ -264,7 +294,7 @@ HTML forms support GET and POST, so the browser submits POST to the resource URL
 
 ## Slide 13 — Role permissions
 
-See the role matrix below. Customers browse without an account. Chef and admin access is enforced in middleware and services, with active role/status reloaded on each request. Deactivating a chef takes effect on the next request.
+The role matrix defines access to each feature. Customers browse without an account. Chef and admin access is enforced in middleware and services, with active role/status reloaded on each request. Deactivating a chef takes effect on the next request.
 
 | Action | Customer | Chef | Admin |
 | --- | --- | --- | --- |
@@ -279,7 +309,7 @@ See the role matrix below. Customers browse without an account. Chef and admin a
 
 **Speaker notes**
 
-Read the differences between chef and administrator. Both can maintain dishes and recipes and record usage or waste. A chef can inspect stock and its history but cannot create ingredient metadata, change categories, receive stock or correct counts. Those actions belong to administrators, who also manage chef accounts. The same restrictions apply to a direct HTTP request even if somebody bypasses the UI. Login rotates the session ID, logout destroys it, and credentials are stored as Argon2 hashes. The database-backed session cookie is HTTP-only, SameSite Lax and secure in production. CSRF is checked on mutations. A staff account is reloaded on every authenticated request so deactivation is effective without waiting for its session to expire.
+Chefs and administrators maintain dishes and recipes, inspect inventory and record usage or waste. Administrators additionally manage categories, ingredient metadata and chef accounts, receive stock and correct counts. These restrictions also apply to direct HTTP requests. Passwords use Argon2 hashes. Login rotates the session ID, logout destroys it, and the database-backed cookie is HTTP-only with SameSite Lax and secure cookies in production. Mutations require CSRF tokens. The server reloads the active account and role on every authenticated request, so chef deactivation takes effect without waiting for the session to expire.
 
 **Project evidence:** `README.md`, `src/middleware/security.js`, `src/services/auth-service.js`, `src/routes/index.js`.
 
@@ -302,7 +332,7 @@ flowchart TD
 
 **Speaker notes**
 
-Use the rice calculation to make the data model concrete. The recipe contains per-serving quantities, and preparing two servings records actual usage for every ingredient. The service snapshots the recipe version and uses Decimal arithmetic. Deterministic row locks and a Prisma transaction commit the balance changes, operation and movement rows together. Insufficient stock in even one ingredient rolls back the whole operation. A UUID request key prevents repeat submission from deducting twice; reusing it with different data is a conflict. Optimistic recipe versions prevent one editor silently overwriting another. The audit ledger is immutable: a correction adds a compensating event instead of rewriting the past. The application uses Prisma data access with tagged SQL for locking inside transactions.
+A recipe specifies quantities per serving. For example, two servings using 100 grams of rice each require 200 grams, reducing a 2,500-gram balance to 2,300 grams. The service snapshots the recipe version and calculates exact quantities with Decimal arithmetic. Deterministic locks and a Prisma transaction commit balances, operation headers and movement rows together. Insufficient stock for one ingredient rolls back the complete operation. UUID request keys prevent repeat deductions and reject reuse with changed data. Recipe versions detect stale edits. Corrections add compensating ledger entries, while tagged SQL supplies locking within Prisma transactions.
 
 **Project evidence:** `src/services/recipe-service.js`, `src/services/stock-service.js`, `prisma/migrations/`.
 
@@ -310,11 +340,11 @@ Use the rice calculation to make the data model concrete. The recipe contains pe
 
 ## Slide 15 — Final verification and fixes
 
-The presentation-preparation test run passed 38 tests with zero failures. The earlier final audit also checked the Prisma schema and browser flows. Bugs fixed included archived-resource updates, signed corrections, form recovery, retained ingredient selections and pending form controls. Tests use isolated PGlite and Supertest, not live Supabase or production concurrency. Parent repository organization was corrected without recreating a nested repo.
+The recorded verification run passed 38 tests with zero failures. Schema validation and browser checks complemented the HTTP and database tests. Bugs fixed included archived-resource updates, signed corrections, form recovery, retained ingredient selections and pending form controls. Tests use isolated PGlite and Supertest, not live Supabase or production concurrency. Parent repository organization was corrected without recreating a nested repo.
 
 **Speaker notes**
 
-State what was verified and where the evidence ends. The 38 tests cover HTTP behavior, access restrictions, escaping, CSRF, method override, archive protection and stock or recipe rules. They use PGlite through PrismaPg plus Supertest and serialize embedded transactions; they do not demonstrate multi-connection behavior under production load. Browser QA used disposable sample records for paper saves and failure recovery. The audit corrected several small but important behaviors, including submitted edits to archived records and lost ingredient selections past the first 100 pantry rows. Another lesson was repository organization: a nested checkout obscured the existing parent repository. Its metadata was backed up and the exercise now belongs to the parent history. No live credentials or Supabase data were needed for presentation work.
+The recorded verification run passed 38 automated tests with zero failures. Coverage includes HTTP behavior, role restrictions, escaped output, CSRF, DELETE overrides, PRG, archive protection and recipe/stock rules. Tests use PGlite through PrismaPg and Supertest. The embedded fixture serializes transactions on one connection, so the result does not establish production load or cross-connection concurrency behavior. Browser checks used fictional sample records. Final fixes protected archived records, preserved failed form values and selected recipe ingredients, and locked pending paper forms. Repository organization also changed to an ordinary exercise folder under the parent Git checkout.
 
 **Project evidence:** `README.md`, `tests/`, `docs/ui-revision.md`.
 
@@ -322,11 +352,11 @@ State what was verified and where the evidence ends. The 38 tests cover HTTP beh
 
 ## Slide 16 — Live demonstration
 
-Demo sequence: entrance → house → public menu filters/turn/details → prepared chef login → recipe edit → record usage → ledger → administrator tools → archive a disposable dish and inspect POST override/DELETE handler/303/GET. Use a prepared demo environment. Saved screenshots provide an offline fallback. No migration or seed is required just to open this presentation.
+Demo sequence: entrance → house → public menu filters/turn/details → prepared chef login → recipe edit → record usage → ledger → administrator tools → archive a disposable dish and inspect POST override/DELETE handler/303/GET. The demonstration uses a prepared sample environment. Saved screenshots provide an offline fallback. The presentation itself requires no database setup.
 
 **Speaker notes**
 
-Keep the demo short and rehearse it with known sample records before presenting. Start the already configured app with npm start from restaurant-mvc; do not run migrations or reseed merely to give the talk. Use a prepared chef account without showing its password, then demonstrate a harmless recipe change and a small usage operation on demo stock. Switch to an administrator to explain the additional permissions. If showing DELETE, choose a clearly disposable demo dish and inspect the request in browser developer tools: the browser sends POST, the override invokes DELETE, and a 303 leads to GET. Do not delete real records for the presentation. If connectivity or login fails, use the screenshot appendix and describe the documented behavior. Finish by inviting questions about SSR, roles and stock integrity.
+The demonstration follows the public entrance and menu, then the chef recipe and stock workflow, and finally administrator permissions. A configured product application, prepared staff accounts and sample inventory support the demonstration. The chef edits a recipe and records a small usage operation, then opens the ledger. Administrator screens illustrate additional stock and account controls. A disposable demo dish demonstrates the archive request: browser POST, server DELETE override, HTTP 303 and the resulting GET. Saved screenshots provide an offline alternative. The final discussion covers SSR, role permissions and stock integrity.
 
 **Project evidence:** `README.md`, `src/routes/index.js`, `tests/`.
 
@@ -334,12 +364,12 @@ Keep the demo short and rehearse it with known sample records before presenting.
 
 ## Appendix A — Team decision log
 
-This log follows the conversation’s progression. “Team decision” refers to a direct requirement or an accepted revision. Supporting implementation choices are documented separately rather than attributed to the team as explicit requests.
+The decision log records project requirements and approved revisions in chronological order. Supporting implementation choices and their rationale appear separately.
 
 | ID | Subject | Team decision | Result / reason |
 | --- | --- | --- | --- |
 | D01 | Restaurant introduction | Public landing page and menu; exclude ordering, reservations and customer accounts. | Keeps the exercise focused on information and staff management. |
-| D02 | JavaScript | Use JS after the team questioned TypeScript. | Matches the exercise and avoids a separate type compilation step. |
+| D02 | JavaScript | Use JavaScript instead of TypeScript. | Matches the exercise and avoids a separate type compilation step. |
 | D03 | Supabase | Use managed PostgreSQL in Supabase. | Database hosting with a relational backend. |
 | D04 | Code-first database | Start without tables; define models and migrations in code. | Schema becomes versioned, reviewable project material. |
 | D05 | Prisma ORM | Use the recommended Node.js ORM connected to Supabase. | Prisma models and queries satisfy the ORM requirement. |
@@ -364,6 +394,7 @@ This log follows the conversation’s progression. “Team decision” refers to
 | D24 | Repository organization | Keep the exercise inside the existing Webapp Developing Git checkout. | Nested Git metadata was backed up; the exercise uses parent history. |
 | D25 | Presentation materials | Create HTML and Markdown with diagrams, screenshots, decisions and notes. | Offline presentation plus detailed rehearsal/reference document. |
 | D26 | Presentation order | Review the completed website before discussing the backend and other technical details. | Entrance, dining, kitchen, pantry/office and design feedback follow the cover; backend slides follow them. |
+| D27 | Workflow and documentation audience | Include the application workflow diagram and rewrite both READMEs for users and the lecturer. | Slide 7 shows role-based application paths. Documentation describes product use, setup and assessment for users and the lecturer. |
 
 ### Supporting implementation choices
 
@@ -603,9 +634,9 @@ The main slides show entrance, house, menu, kitchen, recipe, pantry and office. 
 
 Entrance and house screenshots reuse the final branded UI previews. Other screenshots were captured from the implemented server-rendered UI using an isolated disposable database. `Sample Administrator`, `Sample Chef` and `.test` email addresses are fictional. Stock receipts, usage and waste in the screenshots are sample events. No live Supabase data or real staff credentials were used.
 
-Generated background and dish artwork is documented in `public/images/japan/ASSETS.md`. Local JPG backgrounds total about 1.75 MB, compared with about 9.09 MB for the PNG masters, a reduction of approximately 80.7%; masters and prompts are retained. UI screenshots prove the static appearance; page turns and room motion should be demonstrated live.
+Generated background and dish artwork is documented in `public/images/japan/ASSETS.md`. Local JPG backgrounds total about 1.75 MB, compared with about 9.09 MB for the PNG masters, a reduction of approximately 80.7%; masters and prompts are retained. Screenshots document the static appearance. The live application demonstrates page turns and room motion.
 
-The HTML embeds its images and has no CDN, external font or network dependency. Keep `presentation-assets/` alongside this Markdown document when moving it. Project source links below work from `presentation/` in the repository.
+The HTML embeds its images and has no CDN, external font or network dependency. Keep `presentation-assets/` alongside this Markdown document when moving it. Project source references identify paths in the original repository and remain readable after this folder moves. Mermaid diagrams require a Markdown viewer with Mermaid support. The HTML displays its SVG diagrams directly without an add-on.
 
 ## Appendix E — Demo checklist
 
@@ -628,7 +659,7 @@ Before the presentation:
 | 6 | Show admin stock and chef controls | Role differences enforced on the server |
 | 7 | Archive a disposable dish, inspect network | Browser POST → DELETE handler → 303 → GET |
 
-Offline fallback: show the relevant saved screenshot, describe the verified workflow and avoid pretending a still image demonstrates motion or network behavior.
+Offline fallback: saved screenshots document the interface. Animation and HTTP behavior require the running application or the recorded verification evidence.
 
 ## Appendix F — Questions and answers
 
@@ -647,29 +678,33 @@ Offline fallback: show the relevant saved screenshot, describe the verified work
 
 ## Appendix G — Verification evidence and current limits
 
-During presentation preparation, `npm test` completed with **38 passed, 0 failed**. These tests use isolated PGlite through the Prisma PostgreSQL adapter and Supertest. The fixture serializes transactions on one embedded connection, so it is not a production load or cross-connection concurrency test. No `.env` is loaded and Supabase is not modified by those tests.
+Recorded verification result (13 October 2026): `npm test` completed with **38 passed, 0 failed**. These tests use isolated PGlite through the Prisma PostgreSQL adapter and Supertest. The fixture serializes transactions on one embedded connection, so it is not a production load or cross-connection concurrency test. No `.env` is loaded and Supabase is not modified by those tests.
 
-The earlier final audit also validated the Prisma schema with a temporary audit configuration and exercised paper saves, failed usage recovery, signed corrections, duplicate chef form recovery and DELETE confirmation with a disposable browser fixture. Fixes included blocked archived-resource updates, retained invalid form values, saved ingredients beyond the first 100 pantry results, Add/Remove state and locked fields during pending paper saves.
+Schema validation used an isolated audit configuration. Browser checks exercised paper saves, failed usage recovery, signed corrections, duplicate chef form recovery and DELETE confirmation with a disposable browser fixture. Fixes included blocked archived-resource updates, retained invalid form values, saved ingredients beyond the first 100 pantry results, Add/Remove state and locked fields during pending paper saves.
 
 Most staff lists currently cap at 100 records. The ingredient ledger shows the latest 30 movements and the stock journal the latest 100 operations; public menu pagination covers published dishes. Uploaded media, password-reset email, supplier management, expiry batches, multiple locations and production load testing remain outside the exercise.
 
-The Git issue was organizational: an embedded checkout in the exercise folder interfered with the intended parent-repository setup. Its metadata was backed up; `restaurant-mvc` now lives as an ordinary folder in the existing Webapp Developing repository. The presentation work does not create another repository or commit.
+The Git issue was organizational: an embedded checkout in the exercise folder interfered with the intended parent-repository setup. Its metadata was backed up; `restaurant-mvc` now lives as an ordinary folder in the existing Webapp Developing repository.
 
-## Appendix H — Local project sources
+## Appendix H — Project source reference
 
-- [Project overview](../README.md)
-- [Project rules](../AGENTS.md)
-- [Schema](../prisma/schema.prisma)
-- [Versioned migrations](../prisma/migrations/)
-- [HTTP routes](../src/routes/index.js)
-- [Application / SSR setup](../src/app.js)
-- [Security middleware](../src/middleware/security.js)
-- [Model / repository layer](../src/models/)
-- [Controllers](../src/controllers/)
-- [Services](../src/services/)
-- [Prisma configuration and adapter](../src/config/)
-- [EJS views](../src/views/)
-- [UI revisions](../docs/ui-revision.md)
-- [Artwork provenance and prompts](../public/images/japan/ASSETS.md)
-- [Automated checks and fixtures](../tests/)
-- [Browser enhancements](../public/js/)
+Project paths identify evidence in the original source checkout. They are reference identifiers, not dependencies of this package. The complete source code remains in the product repository.
+
+| Evidence | Original project path |
+| --- | --- |
+| Project overview | `restaurant-mvc/README.md` |
+| Project rules | `restaurant-mvc/AGENTS.md` |
+| Schema | `restaurant-mvc/prisma/schema.prisma` |
+| Versioned migrations | `restaurant-mvc/prisma/migrations/` |
+| HTTP routes | `restaurant-mvc/src/routes/index.js` |
+| Application / SSR setup | `restaurant-mvc/src/app.js` |
+| Security middleware | `restaurant-mvc/src/middleware/security.js` |
+| Model / repository layer | `restaurant-mvc/src/models/` |
+| Controllers | `restaurant-mvc/src/controllers/` |
+| Services | `restaurant-mvc/src/services/` |
+| Prisma configuration and adapter | `restaurant-mvc/src/config/` |
+| EJS views | `restaurant-mvc/src/views/` |
+| UI revisions | `restaurant-mvc/docs/ui-revision.md` |
+| Artwork provenance and prompts | `restaurant-mvc/public/images/japan/ASSETS.md` |
+| Automated checks and fixtures | `restaurant-mvc/tests/` |
+| Browser enhancements | `restaurant-mvc/public/js/` |

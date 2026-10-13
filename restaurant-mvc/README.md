@@ -1,114 +1,171 @@
 # 三太子亭 — Santaishi-tei
 
-JavaScript SSR restaurant introduction website with public menu browsing, admin catalog management, and chef recipe/inventory tools. No customer accounts, orders, or reservations.
+A restaurant introduction website and staff management application developed by **Tam Thái Tử** for a database coursework exercise. The public website presents a Japanese restaurant and its menu. Staff tools support dish management, recipes, ingredient stock and chef administration.
 
-## Stack and structure
+The application uses JavaScript, server-side rendering (SSR), the Model–View–Controller (MVC) pattern, Prisma ORM and Supabase PostgreSQL. Successful form mutations follow Post/Redirect/Get (PRG).
 
-- Express 5 serves HTTP and EJS server-rendered views.
-- Prisma 7 and its PostgreSQL driver adapter connect to Supabase PostgreSQL.
-- Prisma models live in `prisma/schema.prisma`; versioned SQL migrations live in `prisma/migrations/`.
-- `src/models/` holds repository access and the Prisma-backed session store.
-- `src/controllers/` handles HTTP input/output; `src/services/` handles business rules and transactions.
-- `src/routes/`, `src/middleware/`, and `src/validators/` define routes, authorization/CSRF, and input validation.
-- Fixed restaurant copy lives in `src/views/public/`. Images can be placed in `public/images/` and referenced by `/images/filename.jpg`.
-- PostgreSQL application tables live in the private `restaurant` schema. Public visitors use the Express website, not the Supabase Data API.
+## Features
 
-## Local setup
+| Area | Features |
+| --- | --- |
+| Entrance and house | Shoji entrance door, room directory and floor-arrow navigation |
+| Public menu | Search, category filters, name/price sorting, four dishes per spread, page turns and dish details |
+| Kitchen | Dish ticket board, dish creation/editing/archiving and paper-style recipe forms |
+| Pantry | Ingredient shelf/list views, low-stock filters, balances, recipe references and stock ledgers |
+| Stock journal | Receipts, recipe usage, manual usage, waste and signed stock corrections |
+| Administrator office | Chef account creation, profile updates and access deactivation |
 
-Use Node.js 24 or later. In this directory:
+Customers browse without accounts. Ordering, reservations and customer registration are outside the project scope. The kitchen board displays dishes rather than customer orders.
 
-```sh
-npm ci
-npm run db:generate
-npm run db:deploy
-npm run db:seed
-npm start
+## Application workflow
+
+```mermaid
+flowchart LR
+  subgraph Public[Customer]
+    A[Restaurant entrance] --> B[House directory]
+    B --> C[Menu search and sorting]
+    C --> D[Dish details]
+  end
+  subgraph Kitchen[Chef or administrator]
+    E[Staff login] --> F[Kitchen dish board]
+    F --> G[Maintain dishes and recipes]
+    F --> H[Record preparation usage or waste]
+    H --> I[Ingredient ledger and stock journal]
+  end
+  subgraph Office[Administrator]
+    J[Staff login] --> K[Administrator office]
+    K --> L[Manage chef accounts and catalog]
+    K --> M[Receive stock or correct counts]
+    M --> N[Ingredient ledger and stock journal]
+  end
+  B -. Staff rooms .-> E
+  B -. Office .-> J
 ```
 
-Enter your credentials into `.env` locally using `.env.example` as a guide. Agents must never inspect the actual `.env`. Runtime configuration loads it without logging its values.
+Staff routes require an authenticated, active account with the appropriate role. Saving a recipe changes its per-serving specification. Recording usage or waste changes stock and creates ledger entries. Administrators can also receive stock and record corrections.
 
-- `DATABASE_URL`: application PostgreSQL URL; a Supabase Session pooler connection is suitable for this persistent Express server.
-- `MIGRATION_DATABASE_URL`: migration URL using direct or Session pooler access. The CLI targets the `restaurant` schema.
-- `SESSION_SECRET`: at least 32 characters, generated securely.
-- `NODE_ENV`, `PORT`, `APP_ORIGIN`: environment, local port, and browser origin.
+## Permissions
 
-Do not use the Supabase HTTPS project URL as a PostgreSQL connection string. No Supabase API key is needed for this backend. Use separate restricted runtime and migration database users when deploying beyond this exercise.
+| Action | Customer | Chef | Administrator |
+| --- | --- | --- | --- |
+| Browse introduction and published dishes | Yes | Yes | Yes |
+| Create, edit or archive dishes | — | Yes | Yes |
+| View and edit recipes | — | Yes | Yes |
+| View ingredient balances and stock history | — | Yes | Yes |
+| Record usage or waste | — | Yes | Yes |
+| Receive stock or correct counts | — | — | Yes |
+| Manage categories and ingredient metadata | — | — | Yes |
+| Create, update or deactivate chef accounts | — | — | Yes |
 
-The Prisma CLI wrapper suppresses credential-bearing diagnostics and emits only command status or Prisma error codes. Configuration never logs database URLs, passwords, or session secrets.
+The server enforces permissions independently of visible interface controls. Each authenticated request reloads the account's active status and role, so deactivation takes effect on the next request.
 
-## Test UI
+## Requirements and installation
 
-1. Visit `http://localhost:3000/setup` to create the initial admin. This is development-only, loopback-only, and closes permanently once an admin exists.
-2. Visit `/login` and sign in.
-3. Use `/admin/staff` to create a chef account.
-4. Manage menu categories and dishes through `/admin/categories` and `/admin/dishes`.
-5. Receive initial stock through `/kitchen/stock/new` before recording recipe usage.
-6. Maintain per-serving recipes through `/kitchen` and record preparation usage there.
-7. Review immutable stock history at `/kitchen/stock-history`.
-8. Browse the menu anonymously at `/menu`.
+Requirements: **Node.js 24 or later**, npm, and a Supabase PostgreSQL connection suitable for a persistent Node.js server. Commands run from the `restaurant-mvc` directory.
 
-Alternatively, create the first admin with `npm run admin:create`; it asks for an email/name and a hidden password. Do not pass passwords as command-line arguments.
+1. Install dependencies with `npm ci`.
+2. For a new installation, create a local `.env` using `.env.example` as the reference. Retain existing configuration. Environment files remain excluded from version control.
 
-The idempotent seed adds a sample category, a published dish, and three zero-balance ingredients. It never seeds accounts or passwords and does not overwrite existing records.
+   | Variable | Purpose |
+   | --- | --- |
+   | `DATABASE_URL` | Runtime PostgreSQL connection. Supabase Session pooler access suits the persistent Express server. |
+   | `MIGRATION_DATABASE_URL` | PostgreSQL connection for Prisma migrations, using direct or Session pooler access. |
+   | `SESSION_SECRET` | Secure random session secret containing at least 32 characters. |
+   | `NODE_ENV` | `development`, `test` or `production`. Default: `development`. |
+   | `PORT` | HTTP port. Default: `3000`. |
+   | `APP_ORIGIN` | Application origin. Default: `http://localhost:3000`. |
 
-## Roles
+   Database variables require PostgreSQL connection strings. A Supabase HTTPS project URL is not a database connection string. This backend does not require a Supabase API key.
 
-- Customers browse public introduction/menu pages without accounts.
-- Admins manage categories, dishes, ingredients, chef accounts, recipes, and every stock operation.
-- Chefs view inventory, create/edit/archive dishes, edit recipes, and record usage/waste. They cannot receive stock, adjust counts, manage accounts, or change categories and ingredient metadata.
-- Removing a chef uses DELETE and deactivates access while preserving historical references.
-- Each authenticated request reloads active status and role from the database. Deactivation takes effect on the next request.
+3. Generate the Prisma client and deploy the versioned migrations to the configured database:
 
-## HTTP / PRG
+   ```sh
+   npm run db:generate
+   npm run db:deploy
+   ```
 
-Successful HTML form mutations respond with `303 See Other` and a `Location` header; the browser follows with GET. Refreshing that GET does not replay the POST. Mutations never use GET. Category, dish, and ingredient archive forms submit POST with a hidden `_method=DELETE` field to their resource URL. The method-override middleware converts these requests to DELETE before CSRF/authorization checks; successful DELETE handlers still redirect with HTTP 303. Only POST body overrides to DELETE are accepted; GET, query-string, and header overrides cannot trigger deletion.
+   Application tables use the private `restaurant` schema. Select this schema when inspecting tables in the Supabase dashboard.
 
-Forms require session-bound CSRF tokens. Validation failures use 422, conflicts use 409, forbidden operations use 403, and missing resources use 404. Login rotates the session ID; logout destroys it. Sessions have HTTP-only, SameSite cookies and secure cookies in production. Stock forms also have UUID request keys to prevent duplicate deductions.
+4. Optionally add the initial sample catalog with `npm run db:seed`. The idempotent seed creates a sample category, a published dish and three ingredients with zero stock. It does not create accounts or passwords, or overwrite existing records. Initial receipts are required before usage can be recorded. The optional `node scripts/seed-japanese-menu.js` script adds the Japanese demonstration menu without overwriting existing edits.
+5. Start the application with `npm start`. The default local address is [http://localhost:3000](http://localhost:3000). During development, `npm run dev` restarts the server when source files change.
 
-## Database integrity
+## Initial administrator and staff access
 
-- Money is integer VND (`BIGINT`). Quantities are exact `NUMERIC(14,3)` values, calculated using Decimal rather than floating-point arithmetic.
-- Recipes list ingredient quantities per serving. Optimistic versions detect stale edits. Empty draft recipes are allowed; preparation usage requires at least one ingredient.
-- Usage for N servings snapshots the recipe version and records actual ingredient deltas.
-- Ingredient balances, operation headers, and movement history are written in a single Prisma transaction with deterministic row locking.
-- Insufficient stock rolls back the complete operation. Reusing a request key for different data returns 409.
-- Database CHECK constraints prevent invalid roles, negative balances, invalid recipe quantities, incomplete recipe references, and incorrect movement signs/math.
-- Triggers preserve immutable stock history and prevent changing units of referenced ingredients.
-- Archive actions preserve foreign keys/history. Stock corrections create compensating entries.
-- App tables deny schema/table access to Supabase anon/authenticated roles. RLS is not the authorization mechanism for this server-only schema; HTTP middleware and restricted database credentials enforce application access.
-- Lists currently show up to 100 records; menu browsing includes all published dishes. The public menu has category/search/sort controls and four-dish pagination.
+The development-only [setup page](http://localhost:3000/setup) creates the first administrator. It accepts loopback access only and becomes unavailable once an administrator exists. Alternatively, `npm run admin:create` requests a name, email address and hidden password interactively.
 
-## Migrations and tests
+Passwords should be entered through the hidden prompt rather than command-line arguments. There are no default staff credentials. After login, the administrator creates chef accounts in `/admin/staff`.
+
+## Main routes
+
+| Path | Access | Purpose |
+| --- | --- | --- |
+| `/` and `/directory` | Public | Entrance and room navigation |
+| `/menu` and `/menu/:slug` | Public | Published menu and dish details |
+| `/login` | Public | Staff authentication |
+| `/kitchen` and `/kitchen/dishes` | Chef / administrator | Kitchen board and dish management |
+| `/kitchen/dishes/:id/recipe` | Chef / administrator | Recipe form |
+| `/kitchen/ingredients` and `/kitchen/ingredients/:id` | Chef / administrator | Pantry and ingredient ledger |
+| `/kitchen/stock/new` and `/kitchen/stock-history` | Chef / administrator | Role-aware stock form and journal |
+| `/admin` and `/admin/staff` | Administrator | Office and chef accounts |
+| `/admin/categories` | Administrator | Menu categories |
+
+The [presentation reference](presentation/presentation.md#appendix-c--http-endpoint-reference) documents the complete endpoint list.
+
+## Technical architecture
+
+Express 5 serves HTTP requests. EJS renders pages and staff forms on the server. Prisma 7 with its PostgreSQL driver adapter accesses Supabase. Database-backed Express sessions, Argon2 password hashes and CSRF tokens protect staff actions.
+
+| Directory | Responsibility |
+| --- | --- |
+| `src/routes/` and `src/middleware/` | HTTP methods, sessions, authentication, role checks and CSRF |
+| `src/controllers/` and `src/validators/` | HTTP input/output, validation and view coordination |
+| `src/services/` | Business rules and transactions |
+| `src/models/` | Repository access and Prisma-backed session storage |
+| `src/views/` | EJS templates rendered on the server |
+| `public/` | Browser enhancements, styles and local artwork |
+| `prisma/` | Models and versioned migrations |
+| `tests/` | Isolated fixtures and automated checks |
+| `presentation/` | HTML slides, Markdown notes and screenshots |
+
+Browser JavaScript fetches server-rendered HTML for menu turns and paper dialogs. Standard links and form submissions remain available. Room changes use short POV transitions, the entrance uses sliding doors, and reduced-motion preferences skip movement. Fixed restaurant introduction content lives in templates, while dish and ingredient records live in PostgreSQL.
+
+## HTTP methods and PRG
+
+GET requests retrieve pages and records. Create/update forms use POST. Catalog archives and chef deactivation use DELETE resource routes. Since native HTML forms submit GET or POST, archive forms send POST with hidden `_method=DELETE` and CSRF fields. Middleware accepts DELETE overrides only from the POST body. GET, query-string and header overrides cannot trigger deletion.
+
+Successful form mutations return **303 See Other** with a `Location` header. The browser follows with GET, so refreshing the resulting page does not repeat the mutation. Validation failures use `422`, conflicts use `409`, forbidden operations use `403`, missing resources use `404`, and unauthenticated mutations use `401`. Protected page requests redirect unauthenticated visitors to login.
+
+Sessions use HTTP-only, SameSite cookies and secure cookies in production. Login rotates the session ID, and logout destroys the session.
+
+## Database design and integrity
+
+The nine application models are `StaffUser`, `Category`, `Dish`, `Ingredient`, `Recipe`, `RecipeItem`, `StockOperation`, `StockMovement` and `Session`. The [Prisma schema](prisma/schema.prisma) defines their fields and relations. The [presentation schema reference](presentation/presentation.md#appendix-b--full-database-field-reference) lists every scalar field and SQL type.
+
+- Prices use integer VND values in `BIGINT`. Stock quantities use exact `NUMERIC(14,3)` values and Decimal calculations.
+- Recipes specify quantities per serving. Optimistic versions detect stale edits. Preparation usage requires at least one ingredient and snapshots the recipe version.
+- A Prisma transaction writes balances, operation headers and movement history together. Tagged SQL supplies deterministic row/advisory locking within the transaction.
+- Insufficient stock rolls back the whole operation. UUID request keys prevent repeat deductions and reject reuse with a different payload.
+- CHECK constraints enforce valid roles, nonnegative balances, positive recipe quantities and correct movement signs/math.
+- Triggers preserve immutable stock history and prevent changing a referenced ingredient's unit.
+- Catalog archives and staff deactivation retain historical references. Corrections create signed compensating entries.
+
+The server owns database access. Supabase `anon` and `authenticated` roles cannot access the application tables. HTTP authorization and restricted database credentials protect this private schema.
+
+## Validation and assessment
 
 ```sh
 npm run db:validate
-npm run db:generate
 npm test
 ```
 
-Tests run against an isolated embedded PostgreSQL engine (PGlite) through Prisma's PostgreSQL adapter, plus Supertest HTTP requests. They do not load `.env` or modify Supabase. The test-only pool serializes transactions on the embedded connection; production uses PostgreSQL row/advisory locks across connections.
+The automated suite covers server-rendered output, role restrictions, CSRF, PRG, DELETE overrides, archived-resource protection, recipe versions and stock integrity. Tests use PGlite through the Prisma PostgreSQL adapter and Supertest. They do not load `.env` or modify Supabase.
 
-The final audit passes 38 automated tests, including complete chef/admin restrictions, ignored GET/query/header method overrides, CSRF on DELETE, PRG refresh behavior, escaped SSR output, and archived-resource protection. Prisma schema validation used a temporary audit configuration without dotenv. Browser checks used a disposable database for recipe-paper saves, failed usage recovery, signed stock corrections, duplicate chef form recovery, and DELETE confirmation. No Supabase schema/data changes were needed. Recipe editors retain saved ingredients beyond the first 100 pantry records, and paper forms lock their fields while a save is pending.
+The embedded test fixture serializes transactions on one connection. Production concurrency and load testing require separate checks against PostgreSQL with multiple connections. The [presentation package](presentation/README.md) provides the website review, workflow diagrams, technical decisions, schema, screenshots, speaker notes and demonstration checklist.
 
-To change the schema, edit `prisma/schema.prisma` and create a new migration using Prisma Migrate against a local development PostgreSQL database. Include CHECK constraints/triggers in migration SQL where Prisma cannot express them. Never edit an already-deployed migration. Deploy reviewed changes using `npm run db:deploy`.
+## Schema maintenance and limits
 
-## Current limits
+Schema changes require a new versioned migration created against a local development PostgreSQL database. CHECK constraints and triggers belong in migration SQL where Prisma cannot express them. Deployed migration files remain unchanged. Reviewed migrations are applied with `npm run db:deploy`.
 
-The UI provides a Japanese restaurant setting and paper-based management screens. Dish images use controlled local paths; uploaded media, password reset/email delivery, suppliers, expiry batches, and multiple restaurants are outside the current backend. Use HTTPS and reviewed proxy/database configuration for production deployment.
+Most staff lists show up to 100 records. Ingredient ledgers show the latest 30 movements, and the stock journal shows the latest 100 operations. Public menu pagination covers published dishes. Dish images use controlled local paths. Uploaded media, password-reset email, supplier management, expiry batches and multiple restaurant locations are outside the current scope.
 
-## Japanese restaurant experience
-
-- `/`: illustrated exterior with native shoji panels. The sliding door is used only to enter the restaurant.
-- `/directory`: glowing arrows projected onto the foyer floor toward dining, kitchen, and office. Labels appear on hover/keyboard focus and remain visible on phones.
-- `/menu`: open menu book on a dining-table background. Four dishes per spread, two-sided 800 ms page turns with moving shadows, category/search filters, name/price sorting, and dish dialogs. The backend renders every spread; JavaScript updates the book and browser history without a full page reload.
-- `/kitchen` and `/kitchen/dishes`: searchable clipped-ticket board on a Japanese kitchen background. Editing lifts a server-rendered dish or recipe sheet into a dialog; a confirmed successful save returns it to the board. Failed validation preserves entries.
-- `/kitchen/ingredients`: pantry jars, shelf/list toggle, search, and low-stock filtering. Open a label for the ingredient ledger, recipe references, and the latest 30 stock movements.
-- `/kitchen/stock/new?ingredientId=UUID`: stock form with that ingredient selected.
-- `/admin` and `/admin/staff`: staff roster, chef creation, profile updates, and access removal.
-- Recipe sheets show quantities per serving, current pantry stock, Add/Remove controls, and preparation notes. Recipe edits do not deduct stock; preparation usage and waste are recorded separately.
-- Room changes use a short POV turn/step. Links between kitchen subpages use normal navigation. Reduced-motion preferences skip movement; links and forms still work without JavaScript.
-- Mutations keep CSRF, authorization, and HTTP 303 PRG. Archive forms use DELETE method override and a confirmation dialog.
-- Generated artwork is local under `public/images/japan/`; PNG masters and generation prompts are preserved. The website loads optimized JPG backgrounds.
-- `node scripts/seed-japanese-menu.js` idempotently adds the demonstration menu without overwriting existing edits.
-
-No schema changes were required for this revision. Browser QA uses a disposable database rather than Supabase. Agents never inspect `.env`.
+Production deployment requires HTTPS and reviewed proxy/database configuration with separate restricted runtime and migration users. Generated setting and food artwork, prompts and PNG masters are documented in [the asset record](public/images/japan/ASSETS.md). The application loads optimized JPG backgrounds.
