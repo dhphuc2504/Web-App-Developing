@@ -3,11 +3,42 @@
  const ordinaryClick=e=>!e.defaultPrevented && e.button===0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
  const parse=html=>new DOMParser().parseFromString(html,'text/html');
  const room=path=>path==='/'?'outside':path==='/directory'?'house':path.startsWith('/menu')?'dining':path.startsWith('/kitchen')?'kitchen':path.startsWith('/admin')?'office':'staff';
- let leaving=false,menuRequest=null,menuSequence=0,finishBookTurn=null,paperBusy=false,paperDirty=false,paperOrigin=null,paperFetch=null;
+ const journeyRoot=document.documentElement,doors=document.querySelector('.journey-overlay');
+ let leaving=journeyRoot.classList.contains('journey-arriving'),journeySequence=0,menuRequest=null,menuSequence=0,finishBookTurn=null,paperBusy=false,paperDirty=false,paperOrigin=null,paperFetch=null;
  const paper=document.getElementById('paper-dialog');
- const resetJourney=()=>{leaving=false;document.body.classList.remove('walking-out','walking-in','opening-entrance','turn-left','turn-right','turn-forward');};
+ const resetJourney=()=>{leaving=false;journeySequence++;clearTimeout(window.santaishiDoorWatchdog);journeyRoot.classList.remove('journey-closing','journey-arriving','journey-revealing');document.body.removeAttribute('aria-busy');document.querySelectorAll('[data-journey][aria-busy]').forEach(link=>link.removeAttribute('aria-busy'));try{sessionStorage.removeItem('santaishi-tei-doors');}catch{}};
  window.addEventListener('pageshow',e=>{if(e.persisted)resetJourney();});
- try {const arrival=JSON.parse(sessionStorage.getItem('santaishi-tei-walk') || 'null');sessionStorage.removeItem('santaishi-tei-walk');if(arrival && Date.now()-arrival.at<12000 && !reduced.matches){document.body.classList.add('walking-in',`turn-${arrival.direction}`);setTimeout(resetJourney,260);}}catch{}
+ async function panelsFinished(fallbackMs){
+  const panels=[...doors.querySelectorAll('.journey-panel')];let deadline;
+  const sliding=panels.every(panel=>typeof panel.getAnimations==='function')
+   ?Promise.all(panels.flatMap(panel=>panel.getAnimations()).map(animation=>animation.finished.catch(()=>{})))
+   :new Promise(resolve=>setTimeout(resolve,fallbackMs));
+  try{await Promise.race([sliding,new Promise(resolve=>{deadline=setTimeout(resolve,1200);})]);}
+  finally{clearTimeout(deadline);}
+ }
+ async function revealRoom(){
+  if(!doors || reduced.matches){resetJourney();return;}
+  document.body.setAttribute('aria-busy','true');
+  // Hold the matching closed view until the new room's first assets are ready.
+  if(document.readyState!=='complete')await new Promise(resolve=>{
+   const ready=()=>{clearTimeout(deadline);window.removeEventListener('load',ready);resolve();};
+   const deadline=setTimeout(ready,1500);window.addEventListener('load',ready,{once:true});
+  });
+  if(!journeyRoot.classList.contains('journey-arriving'))return;
+  doors.querySelectorAll('.journey-panel').forEach(panel=>panel.getBoundingClientRect());
+  journeyRoot.classList.add('journey-revealing');await panelsFinished(700);resetJourney();
+ }
+ if(journeyRoot.classList.contains('journey-arriving'))revealRoom().catch(resetJourney);
+ async function changeRoom(link,url){
+  if(!doors){location.assign(url.href);return;}
+  try{sessionStorage.setItem('santaishi-tei-doors',JSON.stringify({at:Date.now()}));}
+  catch{location.assign(url.href);return;}
+  const sequence=++journeySequence;link.setAttribute('aria-busy','true');document.body.setAttribute('aria-busy','true');
+  doors.querySelectorAll('.journey-panel').forEach(panel=>panel.getBoundingClientRect());
+  journeyRoot.classList.add('journey-closing');await panelsFinished(550);
+  if(sequence!==journeySequence)return;
+  location.assign(url.href);
+ }
  // Preload scene assets only. Protected GET pages may consume a session notice.
  document.querySelectorAll('a[data-journey]').forEach(link=>link.addEventListener('pointerenter',()=>{const dest=room(new URL(link.href).pathname),src={dining:'dining-table',kitchen:'kitchen',house:'foyer',outside:'exterior'}[dest];if(src){const image=new Image();image.src=`/images/japan/${src}.jpg`;}},{once:true}));
  async function menuNavigate(href,{history=true,flip='',focusId=''}={}) {
@@ -92,9 +123,7 @@
   if(link.hasAttribute('data-book-link')){e.preventDefault();menuNavigate(url.href,{flip:link.dataset.flip || ''});return;}
   if(link.hasAttribute('data-paper-link') && paper?.showModal){e.preventDefault();openPaper(link);return;}
   if(!link.hasAttribute('data-journey') || reduced.matches || url.href===location.href || room(url.pathname)===room(location.pathname))return;
-  e.preventDefault();if(leaving)return;leaving=true;const direction=['left','right'].includes(link.dataset.journey)?link.dataset.journey:'forward';
-  try{sessionStorage.setItem('santaishi-tei-walk',JSON.stringify({direction,at:Date.now()}));}catch{}
-  document.body.classList.add(`turn-${direction}`,link.hasAttribute('data-entrance')?'opening-entrance':'walking-out');setTimeout(()=>location.assign(url.href),link.hasAttribute('data-entrance')?620:210);
+  e.preventDefault();if(leaving)return;leaving=true;changeRoom(link,url).catch(()=>{resetJourney();location.assign(url.href);});
  });
  document.addEventListener('change',e=>{if(e.target.matches('[data-auto-submit]'))e.target.form.requestSubmit();if(e.target.matches('[data-pantry-low]'))filterPantry();});
  function filterPantry(){const pantry=document.querySelector('[data-pantry]');if(!pantry)return;const q=pantry.querySelector('[data-pantry-search]').value.trim().toLowerCase(),low=pantry.querySelector('[data-pantry-low]').checked;let count=0;pantry.querySelectorAll('[data-pantry-item]').forEach(item=>{item.hidden=!item.dataset.name.includes(q) || low && item.dataset.low!=='true';if(!item.hidden)count++;});pantry.querySelector('[data-pantry-empty]').hidden=count!==0;}

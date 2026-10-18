@@ -89,6 +89,20 @@ Requirements: **Node.js 24 or later**, npm, and a Supabase PostgreSQL connection
 4. Optionally add the initial sample catalog with `npm run db:seed`. The idempotent seed creates a sample category, a published dish and three ingredients with zero stock. It does not create accounts or passwords, or overwrite existing records. Initial receipts are required before usage can be recorded. The optional `node scripts/seed-japanese-menu.js` script adds the Japanese demonstration menu without overwriting existing edits.
 5. Start the application with `npm start`. The default local address is [http://localhost:3000](http://localhost:3000). During development, `npm run dev` restarts the server when source files change.
 
+## Development server troubleshooting
+
+The Express application serves the restaurant pages. A VS Code static preview or Live Server can display a repository directory listing instead of the application. The correct startup message is `Restaurant running at http://localhost:PORT`.
+
+If port 3000 is occupied, stop the static preview or start Express on a different port:
+
+```sh
+PORT=3002 APP_ORIGIN=http://localhost:3002 npm run dev
+```
+
+Open [http://localhost:3002](http://localhost:3002) and keep the terminal running. These settings apply to that process and do not change `.env`. Startup reports the database connection check before listening, limits connection attempts to ten seconds, and provides a specific message for occupied ports.
+
+Ctrl+C begins a single shutdown, stops the session-cleanup timer, closes HTTP connections and disconnects Prisma. Repeated signals reuse the same shutdown. If a request or database operation prevents cleanup from finishing within five seconds, the process closes remaining HTTP connections and exits with a failure status.
+
 ## Initial administrator and staff access
 
 The development-only [setup page](http://localhost:3000/setup) creates the first administrator. It accepts loopback access only and becomes unavailable once an administrator exists. Alternatively, `npm run admin:create` requests a name, email address and hidden password interactively.
@@ -127,7 +141,7 @@ Express 5 serves HTTP requests. EJS renders pages and staff forms on the server.
 | `tests/` | Isolated fixtures and automated checks |
 | `presentation/` | HTML slides, Markdown notes and screenshots |
 
-Browser JavaScript fetches server-rendered HTML for menu turns and paper dialogs. Standard links and form submissions remain available. Room changes use short POV transitions, the entrance uses sliding doors, and reduced-motion preferences skip movement. Fixed restaurant introduction content lives in templates, while dish and ingredient records live in PostgreSQL.
+Browser JavaScript fetches server-rendered HTML for menu turns and paper dialogs. Standard links and form submissions remain available. Room links use two full-screen shoji panels: both sides close before navigation, then slide apart to reveal the new server-rendered room. Links inside the same room use normal navigation, and reduced-motion preferences skip the panels. Fixed restaurant introduction content lives in templates, while dish and ingredient records live in PostgreSQL.
 
 ## HTTP methods and PRG
 
