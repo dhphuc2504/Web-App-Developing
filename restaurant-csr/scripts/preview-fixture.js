@@ -1,5 +1,6 @@
 // Disposable browser/demo server: never imports env.js or connects to Supabase.
 import express from "express";
+import { createPhotoService } from "../src/services/photo-service.js";
 import { testDatabase } from "../tests/database.js";
 import { createApp } from "../src/app.js";
 import { PrismaSessionStore } from "../src/models/session-store.js";
@@ -71,7 +72,36 @@ for (const [index, name] of [
     chef.id,
   );
 }
+const uploadedPhotos = new Map();
+const mockPhotos = createPhotoService(
+  {
+    SUPABASE_URL: "https://fixture.example.test",
+    SUPABASE_SECRET_KEY: "fixture-only",
+  },
+  {
+    storage: {
+      getBucket: async () => ({ data: { public: true } }),
+      from: () => ({
+        upload: async (path, bytes) => {
+          uploadedPhotos.set(path.split("/").at(-1), bytes);
+          return {};
+        },
+      }),
+    },
+  },
+);
 const app = createApp({
+  photoService: {
+    origin: null,
+    acceptsPath: (path) => !path || path.startsWith("/images/"),
+    upload: async (file) => {
+      const result = await mockPhotos.upload(file);
+      return {
+        imagePath:
+          "/images/fixture-uploads/" + result.imagePath.split("/").at(-1),
+      };
+    },
+  },
   db,
   store: new PrismaSessionStore(db),
   config: {
@@ -80,6 +110,11 @@ const app = createApp({
   },
 });
 const preview = express();
+preview.get("/images/fixture-uploads/:name", (req, res) => {
+  const bytes = uploadedPhotos.get(req.params.name);
+  if (!bytes) return res.sendStatus(404);
+  res.type("webp").send(bytes);
+});
 let failBoardRead = false,
   boardFailureUsed = false;
 preview.use((req, res, next) => {
@@ -91,15 +126,13 @@ preview.use((req, res, next) => {
     if (req.method === "GET" && req.path === "/api/dishes" && failBoardRead) {
       failBoardRead = false;
       boardFailureUsed = true;
-      return res
-        .status(500)
-        .json({
-          ok: false,
-          error: {
-            code: "INTERNAL_ERROR",
-            message: "Simulated board refresh failure.",
-          },
-        });
+      return res.status(500).json({
+        ok: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "Simulated board refresh failure.",
+        },
+      });
     }
   }
   if (

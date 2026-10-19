@@ -126,3 +126,7 @@ npm start
 ```
 
 Configure server-side environment variables through the hosting provider: `NODE_ENV=production`, the public HTTPS `APP_ORIGIN`, `DATABASE_URL`, `SESSION_SECRET` and the platform-provided `PORT`. Express binds to `0.0.0.0` in production, serves the React build and API from one origin, trusts one reverse-proxy hop and uses secure session cookies. Use a Node-capable host. API requests never fall through to the SPA HTML fallback.
+
+## Dish photos and publication
+
+The dish editor supports device photo uploads, automatic URLs and separate draft/publish actions. Server-only Supabase Storage configuration and API details are documented in [Dish photos and publication](docs/photo-uploads.md). Existing local images continue to work; this feature requires no database migration.

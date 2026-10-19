@@ -113,3 +113,20 @@ test("401 notifies auth state and cancellation is distinguishable", async () => 
     { code: "CANCELLED" },
   );
 });
+test("photo multipart keeps browser boundary and shared CSRF handling", async () => {
+  let sent;
+  const client = createApiClient({
+    fetchImpl: async (url, options) => {
+      if (url.endsWith("/session"))
+        return response({ ok: true, data: { csrfToken: "token" } });
+      sent = options;
+      return response({ ok: true, data: { imagePath: "/images/photo.webp" } });
+    },
+  });
+  const body = new FormData();
+  body.append("photo", new Blob(["test"], { type: "image/png" }), "dish.png");
+  await client.request("/dish-photos", { method: "POST", body });
+  assert.equal(sent.body, body);
+  assert.equal(sent.headers["Content-Type"], undefined);
+  assert.equal(sent.headers["X-CSRF-Token"], "token");
+});

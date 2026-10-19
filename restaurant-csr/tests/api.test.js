@@ -547,3 +547,63 @@ test("staff can edit public preparation summaries and changing slug preserves th
   });
   assert.equal(clear.body.data.preparationSummary, null);
 });
+test("photo endpoint enforces authentication, CSRF and validates multipart files", async () => {
+  assert.equal(
+    (
+      await request(app)
+        .post("/api/dish-photos")
+        .attach("photo", Buffer.from("bad"), "dish.png")
+    ).status,
+    401,
+  );
+  const session = await login("chef");
+  assert.equal(
+    (
+      await session.agent
+        .post("/api/dish-photos")
+        .attach("photo", Buffer.from("bad"), "dish.png")
+    ).status,
+    403,
+  );
+  const bad = await session.agent
+    .post("/api/dish-photos")
+    .set("X-CSRF-Token", session.token)
+    .attach("photo", Buffer.from("bad"), "dish.png");
+  assert.equal(bad.status, 200);
+  assert.equal(bad.body.error.code, "INVALID_PHOTO");
+  const { default: sharp } = await import("sharp");
+  const bytes = await sharp({
+    create: { width: 10, height: 10, channels: 3, background: "red" },
+  })
+    .png()
+    .toBuffer();
+  const valid = await session.agent
+    .post("/api/dish-photos")
+    .set("X-CSRF-Token", session.token)
+    .attach("photo", bytes, "dish.png");
+  assert.equal(valid.body.error.code, "STORAGE_NOT_CONFIGURED");
+});
+test("chef creates automatic unique slugs and controls draft publication without changing URLs", async () => {
+  const s = await login("chef");
+  const body = {
+    name: "New chef special",
+    categoryId: category.id,
+    priceMinor: "45000",
+  };
+  const first = await send(s, "post", "/dishes", body);
+  assert.equal(first.body.ok, true);
+  assert.equal(first.body.data.slug, "new-chef-special");
+  assert.equal(first.body.data.isPublished, false);
+  const second = await send(s, "post", "/dishes", body);
+  assert.equal(second.body.data.slug, "new-chef-special-2");
+  const edited = await send(s, "patch", "/dishes/" + first.body.data.id, {
+    name: "Renamed special",
+    isPublished: true,
+  });
+  assert.equal(edited.body.data.slug, "new-chef-special");
+  assert.equal(edited.body.data.isPublished, true);
+  const bad = await send(s, "patch", "/dishes/" + first.body.data.id, {
+    imagePath: "https://example.com/private.webp",
+  });
+  assert.equal(bad.body.error.code, "INVALID_PHOTO_REFERENCE");
+});

@@ -100,3 +100,9 @@ Pages call resource modules through hooks. Only `client/src/api/client.js` perfo
 `GET /api/menu/:slug` includes `ingredients` (names only), `preparationSummary`, `estimatedMinutes` and up to three `relatedDishes`. Related dishes prefer the same category; drafts, archived dishes and inactive categories are excluded.
 
 Public preparation copy is stored in `Dish.preparationSummary` (`preparation_summary` in PostgreSQL) and edited through the staff dish editor. It is never extracted from internal instructions. Changing a name or slug preserves the stored copy. POST/PATCH dish payloads allow an optional summary up to 5,000 characters; an empty string clears it. Estimated minutes are the sum of preparation and cooking time only when both are provided; otherwise the value is `null`. It is not a serving-time guarantee. Missing recipes return an empty ingredient list. The response excludes recipe quantities, notes, instructions, editor identity and stock balances.
+
+### Dish photo uploads
+
+`POST /api/dish-photos` accepts one `photo` file using `multipart/form-data`, with a chef/admin session and CSRF header. Unlike the JSON endpoints, the browser sets its multipart Content-Type boundary. Success returns `{ok:true,data:{imagePath}}`; use that URL in the subsequent dish POST/PATCH. See [photo limits and Storage setup](photo-uploads.md).
+
+For new dishes, `slug` is optional and generated uniquely from `name` when omitted. Renaming a dish without supplying `slug` keeps its URL. Existing explicit-slug API clients remain supported. `isPublished:false` saves a draft; `true` publishes it. The UI makes these separate save actions. `preparationSummary` is also writable.

@@ -10,6 +10,10 @@ const parsed = z
     APP_ORIGIN: z.string().url().default("http://localhost:3000"),
     DATABASE_URL: z.string().min(1),
     SESSION_SECRET: z.string().min(32),
+    SUPABASE_URL: z.string().optional(),
+    SUPABASE_SECRET_KEY: z.string().optional(),
+    SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+    SUPABASE_STORAGE_BUCKET: z.string().default("dish-photos"),
   })
   .safeParse(process.env);
 if (!parsed.success)

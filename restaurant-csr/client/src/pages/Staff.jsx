@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { activity } from "../api/client.js";
+import { DishEditor } from "../components/DishEditor.jsx";
 import {
   Link,
   Navigate,
@@ -403,6 +404,28 @@ export function CatalogEditor({ kind }) {
   );
 }
 function Editor({ kind, id, record, categories, onDone, onCancel }) {
+  if (kind === "dish")
+    return (
+      <DishEditor
+        id={id}
+        record={record}
+        categories={categories}
+        onDone={onDone}
+        onCancel={onCancel}
+      />
+    );
+  return (
+    <BasicEditor
+      kind={kind}
+      id={id}
+      record={record}
+      categories={categories}
+      onDone={onDone}
+      onCancel={onCancel}
+    />
+  );
+}
+function BasicEditor({ kind, id, record, categories, onDone, onCancel }) {
   const [values, setValues] = useState(
       Object.fromEntries(
         Object.keys(defaults[kind]).map((key) => [

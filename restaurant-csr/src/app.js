@@ -9,20 +9,28 @@ import { createAuthService } from "./services/auth-service.js";
 import { createCatalogService } from "./services/catalog-service.js";
 import { createRecipeService } from "./services/recipe-service.js";
 import { createStockService } from "./services/stock-service.js";
+import { createPhotoService } from "./services/photo-service.js";
 import { createApiController } from "./controllers/api-controller.js";
 import { loadUser } from "./middleware/security.js";
 import { createRoutes } from "./routes/index.js";
 import { AppError } from "./lib/errors.js";
 import { failure, errorHandler } from "./lib/responses.js";
-export function createApp({ db, store, config }) {
+export function createApp({ db, store, config, photoService }) {
   const app = express(),
-    repo = createRepository(db);
+    repo = createRepository(db),
+    photos = photoService || createPhotoService(config);
   app.disable("x-powered-by");
   if (config.NODE_ENV === "production") app.set("trust proxy", 1);
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
+          "img-src": [
+            "'self'",
+            "data:",
+            "blob:",
+            ...(photos.origin ? [photos.origin] : []),
+          ],
           "upgrade-insecure-requests":
             config.NODE_ENV === "production" ? [] : null,
         },
@@ -33,6 +41,15 @@ export function createApp({ db, store, config }) {
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
+    if (req.method === "POST" && req.path === "/dish-photos") {
+      if (!req.is("multipart/form-data"))
+        throw new AppError(
+          422,
+          "Upload a photo using multipart/form-data.",
+          "CONTENT_TYPE_REQUIRED",
+        );
+      return next();
+    }
     if (
       ["POST", "PUT", "PATCH"].includes(req.method) &&
       !req.is("application/json")
@@ -69,7 +86,8 @@ export function createApp({ db, store, config }) {
       createApiController({
         repo,
         auth: createAuthService(repo),
-        catalog: createCatalogService(repo),
+        catalog: createCatalogService(repo, { photos }),
+        photos,
         recipes: createRecipeService(db),
         stock: createStockService(db),
       }),

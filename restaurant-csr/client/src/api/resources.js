@@ -22,6 +22,17 @@ export const dishesApi = collection("dishes"),
   ingredientsApi = collection("ingredients"),
   categoriesApi = collection("categories"),
   chefsApi = collection("chefs");
+export const photosApi = {
+  upload: (file) => {
+    const body = new FormData();
+    body.append("photo", file);
+    return http.request("/dish-photos", {
+      method: "POST",
+      body,
+      timeoutMs: 60000,
+    });
+  },
+};
 export const recipesApi = {
   get: (dishId, signal) =>
     http.request(`/dishes/${id(dishId)}/recipe`, { signal }),

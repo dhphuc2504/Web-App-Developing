@@ -34,9 +34,18 @@ const models = {
   dishes: "dish",
   ingredients: "ingredient",
 };
-export function createApiController({ repo, auth, catalog, recipes, stock }) {
+export function createApiController({
+  repo,
+  auth,
+  catalog,
+  recipes,
+  stock,
+  photos,
+}) {
   const db = repo.db;
   return {
+    uploadPhoto: async (req, res) =>
+      success(res, await photos.upload(req.file)),
     session: (req, res) =>
       success(res, { user: req.user, csrfToken: ensureCsrf(req) }),
     login: async (req, res) => {

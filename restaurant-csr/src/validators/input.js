@@ -38,7 +38,7 @@ export const categoryInput = z.object({
 export const dishInput = z.object({
   categoryId: uuid,
   name: text(150),
-  slug,
+  slug: slug.optional(),
   description: optionalText(10000),
   preparationSummary: optionalText(5000),
   priceMinor: z
@@ -46,8 +46,11 @@ export const dishInput = z.object({
     .regex(/^\d{1,18}$/)
     .transform(BigInt),
   imagePath: optionalText(1000).refine(
-    (v) => !v || (/^\/images\/[a-zA-Z0-9_./-]+$/.test(v) && !v.includes("..")),
-    "Use a local /images/ path",
+    (v) =>
+      !v ||
+      (/^\/images\/[a-zA-Z0-9_./-]+$/.test(v) && !v.includes("..")) ||
+      /^https:\/\/[^\s]+$/.test(v),
+    "Choose a photo using the upload button",
   ),
   imageAlt: optionalText(200),
   isFeatured: flag,

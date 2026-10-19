@@ -2,6 +2,7 @@ import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import { allow, csrf } from "../middleware/security.js";
 import { failure } from "../lib/responses.js";
+import { photoUpload } from "../middleware/photo-upload.js";
 export function createRoutes(c) {
   const r = Router(),
     kitchen = allow("admin", "chef"),
@@ -30,6 +31,7 @@ export function createRoutes(c) {
   r.delete("/session", kitchen, csrf, c.logout);
   r.get("/menu", c.menu);
   r.get("/menu/:slug", c.menuDish);
+  r.post("/dish-photos", kitchen, csrf, photoUpload, c.uploadPhoto);
   for (const resource of ["dishes", "ingredients", "categories"]) {
     const write = resource === "dishes" ? kitchen : admin;
     r.get("/" + resource, kitchen, c.list(resource));

@@ -5,7 +5,20 @@ import {
   uuid,
 } from "../validators/input.js";
 import { AppError } from "../lib/errors.js";
-export function createCatalogService(repo) {
+export function dishSlug(name) {
+  return (
+    name
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 160)
+      .replace(/-$/, "") || "dish"
+  );
+}
+export function createCatalogService(repo, { photos } = {}) {
   const db = repo.db;
   const parse = (schema, id, body) => {
     const parsed = (id ? schema.partial() : schema).strict().parse(body);
@@ -25,6 +38,20 @@ export function createCatalogService(repo) {
     },
     async dish(id, body) {
       const data = parse(dishInput, id, body);
+      if (
+        data.imagePath &&
+        !(photos
+          ? photos.acceptsPath(data.imagePath)
+          : /^\/images\/[a-zA-Z0-9_./-]+$/.test(data.imagePath) &&
+            !data.imagePath.includes(".."))
+      )
+        throw new AppError(
+          422,
+          "Choose a photo using the upload button.",
+          "INVALID_PHOTO_REFERENCE",
+          { imagePath: "Use an uploaded dish photo." },
+        );
+      if (!id && !data.imageAlt) data.imageAlt = data.name;
       if (data.categoryId) {
         const category = await db.category.findFirst({
           where: { id: data.categoryId, archivedAt: null, isActive: true },
@@ -37,12 +64,28 @@ export function createCatalogService(repo) {
             { categoryId: "Choose an active category." },
           );
       }
-      return id
-        ? db.dish.update({
-            where: { id: uuid.parse(id), archivedAt: null },
-            data,
-          })
-        : db.dish.create({ data });
+      if (id)
+        return db.dish.update({
+          where: { id: uuid.parse(id), archivedAt: null },
+          data,
+        });
+      if (data.slug) return db.dish.create({ data });
+      const base = dishSlug(data.name);
+      // The unique database constraint resolves races between simultaneous creations.
+      for (let suffix = 1; suffix <= 1000; suffix++) {
+        const generated = suffix === 1 ? base : `${base}-${suffix}`;
+        try {
+          return await db.dish.create({ data: { ...data, slug: generated } });
+        } catch (error) {
+          if (error.code !== "P2002") throw error;
+        }
+      }
+      throw new AppError(
+        409,
+        "Please use a more distinctive dish name.",
+        "SLUG_UNAVAILABLE",
+        { name: "Choose a more distinctive name." },
+      );
     },
     async ingredient(id, body) {
       const data = parse(ingredientInput, id, body);

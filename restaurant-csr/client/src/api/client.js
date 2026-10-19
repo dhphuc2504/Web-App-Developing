@@ -16,7 +16,10 @@ export function createApiClient({
   config = API_CONFIG,
 } = {}) {
   let csrfToken = null;
-  async function request(path, { method = "GET", body, signal } = {}) {
+  async function request(
+    path,
+    { method = "GET", body, signal, timeoutMs = config.timeoutMs } = {},
+  ) {
     onPending(1);
     try {
       if (method !== "GET" && !csrfToken) await request("/session", { signal });
@@ -27,15 +30,17 @@ export function createApiClient({
           credentials: "same-origin",
           headers: {
             ...config.headers,
-            ...(body !== undefined
+            ...(body !== undefined && !(body instanceof FormData)
               ? { "Content-Type": "application/json" }
               : {}),
             ...(method !== "GET" ? { "X-CSRF-Token": csrfToken } : {}),
           },
-          ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+          ...(body !== undefined
+            ? { body: body instanceof FormData ? body : JSON.stringify(body) }
+            : {}),
           signal: signal
-            ? AbortSignal.any([signal, AbortSignal.timeout(config.timeoutMs)])
-            : AbortSignal.timeout(config.timeoutMs),
+            ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)])
+            : AbortSignal.timeout(timeoutMs),
         });
       } catch (error) {
         if (signal?.aborted)
