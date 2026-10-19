@@ -8,6 +8,7 @@ import { createAuthService } from "../src/services/auth-service.js";
 import { createCatalogService } from "../src/services/catalog-service.js";
 import { createRecipeService } from "../src/services/recipe-service.js";
 import { installShutdown } from "../src/lib/shutdown.js";
+import { preparationSummary } from "../src/content/dish-stories.js";
 const fixture = await testDatabase(),
   db = fixture.db,
   repo = createRepository(db),
@@ -52,6 +53,7 @@ for (const [index, name] of [
       categoryId: category.id,
       priceMinor: String(75000 + index * 10000),
       description: "Prepared with care. A little taste of Japan.",
+      preparationSummary: preparationSummary(slug),
       imagePath: "/images/japan/food-atlas.png",
       imageAlt: name,
       isPublished: true,
@@ -78,7 +80,28 @@ const app = createApp({
   },
 });
 const preview = express();
+let failBoardRead = false,
+  boardFailureUsed = false;
 preview.use((req, res, next) => {
+  if (process.argv.includes("--fail-board-refresh")) {
+    if (req.method === "PATCH" && /^\/api\/dishes\/[^/]+$/.test(req.path))
+      res.on("finish", () => {
+        if (!boardFailureUsed && res.statusCode === 200) failBoardRead = true;
+      });
+    if (req.method === "GET" && req.path === "/api/dishes" && failBoardRead) {
+      failBoardRead = false;
+      boardFailureUsed = true;
+      return res
+        .status(500)
+        .json({
+          ok: false,
+          error: {
+            code: "INTERNAL_ERROR",
+            message: "Simulated board refresh failure.",
+          },
+        });
+    }
+  }
   if (
     process.argv.includes("--trace") &&
     (req.path.startsWith("/api") || req.accepts(["html", "json"]) === "html")

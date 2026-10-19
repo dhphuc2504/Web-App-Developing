@@ -12,7 +12,7 @@ export function useResource(loader, key, { keepPreviousData = false } = {}) {
     const controller = new AbortController();
     setState((previous) => ({
       data: keepPreviousData ? previous.data : null,
-      error: null,
+      error: keepPreviousData ? previous.error : null,
       loading: true,
     }));
     latest

@@ -1,5 +1,6 @@
-// Public editorial copy, deliberately separate from staff recipe instructions.
-const stories = {
+// Legacy editorial copy for disposable fixtures. Live public pages read Dish.preparationSummary.
+// The additive migration contains the initial backfill; staff recipe instructions remain private.
+export const stories = {
   "salmon-nigiri":
     "Gently seasoned rice is shaped into small bites and topped with silky salmon and a delicate touch of wasabi.",
   "shrimp-tempura":

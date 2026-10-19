@@ -133,6 +133,21 @@ export function Kitchen() {
         <Link to="/kitchen/stock-history">Journal</Link>
       </nav>
       <ErrorNotice error={mutation.error} />
+      {resource.data && resource.error && (
+        <div className="error board-refresh-warning" role="alert">
+          <p>
+            The board couldn’t refresh. Displayed information may be out of
+            date.
+          </p>
+          <button
+            className="secondary"
+            disabled={resource.loading}
+            onClick={resource.reload}
+          >
+            {resource.loading ? "Refreshing…" : "Retry refresh"}
+          </button>
+        </div>
+      )}
       <ResourceState resource={resource} keepPreviousData>
         {(dishes) => (
           <section data-board-workspace>
@@ -307,6 +322,7 @@ const defaults = {
     categoryId: "",
     description: "",
     priceMinor: "0",
+    preparationSummary: "",
     imagePath: "",
     imageAlt: "",
     displayOrder: 0,
@@ -335,6 +351,11 @@ const specs = {
     ["slug", "Slug"],
     ["categoryId", "Category", "select"],
     ["description", "Description", "textarea"],
+    [
+      "preparationSummary",
+      "Public preparation summary (visible to customers)",
+      "textarea",
+    ],
     ["priceMinor", "Price (VND)", "number"],
     ["imagePath", "Local image path (/images/...)"],
     ["imageAlt", "Image description"],

@@ -11,6 +11,7 @@ export async function testDatabase() {
     "202610120001_initial",
     "202610120002_integrity",
     "202610120003_recipe_allocation_check",
+    "202610190001_public_preparation_summary",
   ])
     await engine.exec(
       await readFile(

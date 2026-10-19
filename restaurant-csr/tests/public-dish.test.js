@@ -31,7 +31,9 @@ test("public dish details expose only ingredient names and estimated time, with 
           ...extra,
         },
       });
-    const dish = await create("demo-salmon-teriyaki");
+    const dish = await create("demo-salmon-teriyaki", {
+      preparationSummary: "Salmon gently glazed with teriyaki sauce.",
+    });
     await create("visible");
     await create("draft", { isPublished: false });
     await create("archived", { archivedAt: new Date() });
@@ -86,6 +88,15 @@ test("public dish details expose only ingredient names and estimated time, with 
     ])
       assert.ok(!encoded.includes(secret), secret);
     assert.equal(detail.recipe, undefined);
+    await db.dish.update({
+      where: { id: dish.id },
+      data: { slug: "new-teriyaki-name", name: "Renamed dish" },
+    });
+    assert.equal(
+      (await repo.menu.detail("new-teriyaki-name")).preparationSummary,
+      detail.preparationSummary,
+    );
+    assert.equal(await repo.menu.detail("demo-salmon-teriyaki"), null);
     for (const slug of ["draft", "archived", "hidden-category"])
       assert.equal(await repo.menu.detail(slug), null);
     const bare = await repo.menu.detail("visible");
@@ -96,7 +107,10 @@ test("public dish details expose only ingredient names and estimated time, with 
       where: { dishId: dish.id },
       data: { cookingMinutes: null },
     });
-    assert.equal((await repo.menu.detail(dish.slug)).estimatedMinutes, null);
+    assert.equal(
+      (await repo.menu.detail("new-teriyaki-name")).estimatedMinutes,
+      null,
+    );
   } finally {
     await fixture.close();
   }

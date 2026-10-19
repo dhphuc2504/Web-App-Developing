@@ -14,7 +14,8 @@
     "admin:create": "node scripts/create-admin.js",
     "preview:fixture": "node scripts/preview-fixture.js",
     "format": "prettier --write \"client/src/**/*.{js,jsx,css}\" \"src/**/*.js\" \"tests/*.js\" \"scripts/*.js\" vite.config.js prisma.config.js",
-    "demo:seed": "node scripts/demo-inventory.js"
+    "demo:seed": "node scripts/demo-inventory.js",
+    "db:migrate:summary": "node scripts/migrate-public-summary.js"
   },
   "keywords": [],
   "author": "",

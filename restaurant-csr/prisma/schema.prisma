@@ -45,6 +45,7 @@ model Dish {
   slug         String @unique @db.VarChar(180)
   description  String?
   priceMinor   BigInt @map("price_minor")
+  preparationSummary String? @map("preparation_summary")
   currency     String @default("VND") @db.VarChar(3)
   imagePath    String? @map("image_path")
   imageAlt     String? @map("image_alt") @db.VarChar(200)

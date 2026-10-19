@@ -508,3 +508,42 @@ test("multiple reads and corrections reject attempts to make stock negative", as
     true,
   );
 });
+
+test("staff can edit public preparation summaries and changing slug preserves the published story", async () => {
+  const session = await login("chef");
+  const saved = await send(session, "post", "/dishes", {
+    name: "Public story dish",
+    slug: "public-story-dish",
+    categoryId: category.id,
+    priceMinor: "80000",
+    isPublished: true,
+    preparationSummary: "A customer-facing description.",
+  });
+  assert.equal(saved.body.ok, true);
+  const changed = await send(
+    session,
+    "patch",
+    "/dishes/" + saved.body.data.id,
+    { slug: "renamed-public-story-dish", name: "Renamed public story dish" },
+  );
+  assert.equal(
+    changed.body.data.preparationSummary,
+    "A customer-facing description.",
+  );
+  const publicResponse = await request(app).get(
+    "/api/menu/renamed-public-story-dish",
+  );
+  assert.equal(
+    publicResponse.body.data.preparationSummary,
+    "A customer-facing description.",
+  );
+  assert.equal(publicResponse.body.data.recipe, undefined);
+  const denied = await request(app)
+    .patch("/api/dishes/" + saved.body.data.id)
+    .send({ preparationSummary: "Anonymous edit" });
+  assert.equal(denied.status, 401);
+  const clear = await send(session, "patch", "/dishes/" + saved.body.data.id, {
+    preparationSummary: "",
+  });
+  assert.equal(clear.body.data.preparationSummary, null);
+});

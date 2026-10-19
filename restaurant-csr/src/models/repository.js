@@ -1,10 +1,10 @@
-import { preparationSummary } from "../content/dish-stories.js";
 export function createRepository(db) {
   const publicFields = {
     id: true,
     name: true,
     slug: true,
     description: true,
+    preparationSummary: true,
     priceMinor: true,
     currency: true,
     imagePath: true,
@@ -110,7 +110,6 @@ export function createRepository(db) {
           ingredients: [
             ...new Set(recipe?.items.map((item) => item.ingredient.name) || []),
           ].sort(),
-          preparationSummary: preparationSummary(slug),
           estimatedMinutes:
             hasTime && recipe.preparationMinutes + recipe.cookingMinutes > 0
               ? recipe.preparationMinutes + recipe.cookingMinutes

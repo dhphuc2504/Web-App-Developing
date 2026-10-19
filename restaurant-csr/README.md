@@ -4,7 +4,7 @@ A client-side rendered restaurant application built with JavaScript, React, Reac
 
 ## Relationship to Block 5
 
-`restaurant-csr` is a separate application beside `restaurant-mvc`. It uses the same PostgreSQL `restaurant` schema and Prisma models. **Both applications access the same business records when configured with the same database.** A change to a dish, ingredient or chef in either application is visible to the other. No migration or seed is required for the existing Block 5 database.
+`restaurant-csr` is a separate application beside `restaurant-mvc`. It shares the PostgreSQL `restaurant` schema with Block 5. Block 6 adds an optional `preparation_summary` column to dishes; Block 5 can continue using its existing fields. **Both applications access the same business records when configured with the same database.** A change to a dish, ingredient or chef in either application is visible to the other. The public preparation-summary migration is additive and backfills known dish stories without changing existing fields. It has been applied to the configured exercise database; setup on another Block 5 database requires `npm run db:migrate:summary`.
 
 The React application uses its own cookie name, `restaurant.csr.sid`, while storing sessions in the existing `restaurant.sessions` table. Existing staff credentials remain valid. This project does not create real staff accounts automatically.
 
@@ -64,7 +64,7 @@ flowchart LR
 - `client/src/components/`: navigation, full-screen shoji panels, loading indicator and shared controls.
 - `src/routes/`, `src/controllers/`: HTTP resources, role checks and response orchestration.
 - `src/services/`, `src/models/`: business rules, inventory transactions, sessions and database access.
-- `prisma/`: unchanged Block 5 schema and migration history, retained for reference and isolated tests.
+- `prisma/`: shared business models, Block 5 migration history and the additive Block 6 public-summary migration.
 - `tests/`: isolated PostgreSQL-compatible fixtures and API/client contract tests.
 
 Only the session is checked at application startup. Each route requests its own data when opened. Intro and directory pages require no business-data API call. Menu search, sorting and page numbers are stored in the URL. Browser Back/Forward and direct frontend URLs are supported.

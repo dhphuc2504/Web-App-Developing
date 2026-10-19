@@ -40,6 +40,7 @@ export const dishInput = z.object({
   name: text(150),
   slug,
   description: optionalText(10000),
+  preparationSummary: optionalText(5000),
   priceMinor: z
     .string()
     .regex(/^\d{1,18}$/)
