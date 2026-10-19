@@ -1,0 +1,55 @@
+{
+  "name": "restaurant-csr",
+  "version": "1.0.0",
+  "description": "Block 6: React CSR restaurant with an Express REST API and Prisma",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"node --watch src/server.js\" \"vite --host 127.0.0.1\"",
+    "dev:api": "node --watch src/server.js",
+    "build": "vite build",
+    "start": "node src/server.js",
+    "test": "npm run db:generate && npm run build && node --test tests/*.test.js",
+    "db:generate": "node scripts/prisma.js generate",
+    "db:validate": "node scripts/prisma.js validate",
+    "admin:create": "node scripts/create-admin.js",
+    "preview:fixture": "node scripts/preview-fixture.js",
+    "format": "prettier --write \"client/src/**/*.{js,jsx,css}\" \"src/**/*.js\" \"tests/*.js\" \"scripts/*.js\" vite.config.js prisma.config.js",
+    "demo:seed": "node scripts/demo-inventory.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "argon2": "^0.45.1",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.0",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.4.3",
+    "concurrently": "^9.2.0",
+    "prettier": "^3.9.10",
+    "prisma": "^7.10.0",
+    "supertest": "^7.3.1",
+    "vite": "^7.1.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.0",
+    "mysql2": "^3.24.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
