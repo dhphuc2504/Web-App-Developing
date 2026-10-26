@@ -1,3 +1,4 @@
+import { queryDishes } from "../models/dish-query.js";
 import { promisify } from "node:util";
 import { z } from "zod";
 import { success } from "../lib/responses.js";
@@ -62,38 +63,16 @@ export function createApiController({
       res.clearCookie("restaurant.csr.sid", { path: "/" });
       success(res, { user: null });
     },
-    menu: async (req, res) => {
-      const options = z
-        .object({
-          sort: z
-            .enum(["recommended", "name", "price_asc", "price_desc"])
-            .default("recommended"),
-          category: z.string().max(120).default(""),
-          q: z.string().trim().max(100).default(""),
-          page: z.coerce.number().int().min(1).max(100000).default(1),
-        })
-        .parse(req.query);
-      const total = await repo.menu.count(options),
-        pageCount = Math.max(1, Math.ceil(total / 4)),
-        page = Math.min(options.page, pageCount);
-      const [items, categories] = await Promise.all([
-        repo.menu.list({ ...options, take: 4, skip: (page - 1) * 4 }),
-        repo.categories(),
-      ]);
-      success(res, {
-        items,
-        categories: categories
-          .filter((c) => c.isActive)
-          .map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
-        total,
-        page,
-        pageCount,
-      });
-    },
+    menu: async (req, res) => success(res, await queryDishes(db, req.query)),
     menuDish: async (req, res) =>
       success(res, found(await repo.menu.detail(req.params.slug))),
     list: (resource) => async (req, res) =>
-      success(res, await repo[resource]()),
+      success(
+        res,
+        resource === "dishes"
+          ? await queryDishes(db, req.query, true)
+          : await repo[resource](),
+      ),
     detail: (resource) => async (req, res) =>
       success(
         res,

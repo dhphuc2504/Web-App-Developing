@@ -17,15 +17,6 @@ export function createRepository(db) {
     archivedAt: null,
     category: { isActive: true, archivedAt: null },
   };
-  const menuWhere = (options) => ({
-    ...publicDish,
-    ...(options.category
-      ? { category: { ...publicDish.category, slug: options.category } }
-      : {}),
-    ...(options.q
-      ? { name: { contains: options.q, mode: "insensitive" } }
-      : {}),
-  });
   const menuOrder = {
     recommended: [{ displayOrder: "asc" }, { name: "asc" }, { id: "asc" }],
     name: [{ name: "asc" }, { id: "asc" }],
@@ -51,16 +42,6 @@ export function createRepository(db) {
         }),
     },
     menu: {
-      list: (options = {}) =>
-        db.dish.findMany({
-          where: menuWhere(options),
-          include: { category: true },
-          orderBy: menuOrder[options.sort] || menuOrder.recommended,
-          ...(options.take
-            ? { skip: options.skip || 0, take: options.take }
-            : {}),
-        }),
-      count: (options = {}) => db.dish.count({ where: menuWhere(options) }),
       detail: async (slug) => {
         const row = await db.dish.findFirst({
           where: { ...publicDish, slug },
@@ -122,13 +103,6 @@ export function createRepository(db) {
       db.category.findMany({
         where: { archivedAt: null },
         orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
-        take: 100,
-      }),
-    dishes: () =>
-      db.dish.findMany({
-        where: { archivedAt: null },
-        include: { category: true },
-        orderBy: { name: "asc" },
         take: 100,
       }),
     ingredients: () =>

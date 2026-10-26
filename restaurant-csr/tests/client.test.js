@@ -130,3 +130,24 @@ test("photo multipart keeps browser boundary and shared CSRF handling", async ()
   assert.equal(sent.headers["Content-Type"], undefined);
   assert.equal(sent.headers["X-CSRF-Token"], "token");
 });
+
+test("background browsing leaves global controls available, but mutations still block", async () => {
+  const changes = [];
+  const client = createApiClient({
+    onPending: (n) => changes.push(n),
+    fetchImpl: async () =>
+      response({ ok: true, data: { csrfToken: "test-token" } }),
+  });
+  await client.request("/menu?q=temupra", { background: true });
+  assert.deepEqual(changes, []);
+  await client.request("/dishes/example", {
+    method: "PATCH",
+    body: { name: "Rice" },
+    background: true,
+  });
+  assert.ok(changes.includes(1));
+  assert.equal(
+    changes.reduce((a, b) => a + b, 0),
+    0,
+  );
+});

@@ -130,3 +130,7 @@ Configure server-side environment variables through the hosting provider: `NODE_
 ## Dish photos and publication
 
 The dish editor supports device photo uploads, automatic URLs and separate draft/publish actions. Server-only Supabase Storage configuration and API details are documented in [Dish photos and publication](docs/photo-uploads.md). Existing local images continue to work; this feature requires no database migration.
+
+## Block 7: pagination and search
+
+Dining and kitchen browsing support page numbers, load more and infinite scroll, server-side filters/sorting, PostgreSQL full-text search and bookmark URLs. See [the query contract, index migration and bookmark behavior](docs/block7-pagination.md). Existing data is preserved; the same database and restaurant schema are used.

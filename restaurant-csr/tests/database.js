@@ -2,16 +2,19 @@
 import pg from "pg";
 import { EventEmitter } from "node:events";
 import { readFile } from "node:fs/promises";
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { PGlite } from "@electric-sql/pglite";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 export async function testDatabase() {
-  const engine = new PGlite();
+  const engine = new PGlite({ extensions: { pg_trgm } });
   for (const name of [
     "202610120001_initial",
     "202610120002_integrity",
     "202610120003_recipe_allocation_check",
     "202610190001_public_preparation_summary",
+    "202610260001_dish_search_indexes",
+    "202610260002_dish_fuzzy_search",
   ])
     await engine.exec(
       await readFile(

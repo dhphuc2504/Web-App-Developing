@@ -15,10 +15,17 @@ export const sessionApi = {
 };
 export const menuApi = {
   list: (search, signal) =>
-    http.request("/menu" + (search ? "?" + search : ""), { signal }),
+    http.request("/menu" + (search ? "?" + search : ""), {
+      signal,
+      background: true,
+    }),
   get: (slug, signal) => http.request("/menu/" + id(slug), { signal }),
 };
-export const dishesApi = collection("dishes"),
+export const dishesApi = {
+    ...collection("dishes"),
+    page: (search, signal) =>
+      http.request("/dishes?" + search, { signal, background: true }),
+  },
   ingredientsApi = collection("ingredients"),
   categoriesApi = collection("categories"),
   chefsApi = collection("chefs");

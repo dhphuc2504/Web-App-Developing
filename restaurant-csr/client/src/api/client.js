@@ -18,9 +18,16 @@ export function createApiClient({
   let csrfToken = null;
   async function request(
     path,
-    { method = "GET", body, signal, timeoutMs = config.timeoutMs } = {},
+    {
+      method = "GET",
+      body,
+      signal,
+      timeoutMs = config.timeoutMs,
+      background = false,
+    } = {},
   ) {
-    onPending(1);
+    const blocking = method !== "GET" || !background;
+    if (blocking) onPending(1);
     try {
       if (method !== "GET" && !csrfToken) await request("/session", { signal });
       let response;
@@ -98,7 +105,7 @@ export function createApiClient({
       if (path === "/session" && method === "DELETE") csrfToken = null;
       return result.data;
     } finally {
-      onPending(-1);
+      if (blocking) onPending(-1);
     }
   }
   return { request };

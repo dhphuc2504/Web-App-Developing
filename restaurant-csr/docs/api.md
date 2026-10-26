@@ -106,3 +106,7 @@ Public preparation copy is stored in `Dish.preparationSummary` (`preparation_sum
 `POST /api/dish-photos` accepts one `photo` file using `multipart/form-data`, with a chef/admin session and CSRF header. Unlike the JSON endpoints, the browser sets its multipart Content-Type boundary. Success returns `{ok:true,data:{imagePath}}`; use that URL in the subsequent dish POST/PATCH. See [photo limits and Storage setup](photo-uploads.md).
 
 For new dishes, `slug` is optional and generated uniquely from `name` when omitted. Renaming a dish without supplying `slug` keeps its URL. Existing explicit-slug API clients remain supported. `isPublished:false` saves a draft; `true` publishes it. The UI makes these separate save actions. `preparationSummary` is also writable.
+
+## Block 7 pagination update
+
+The menu and staff dishes collections now use the paged response and full-text query contract in [Block 7 pagination](block7-pagination.md). This supersedes the earlier four-item-only menu and 100-record dish list descriptions. `/api/dishes` now returns `{items, categories, total, page, pageSize, pageCount, hasNext, mode}` inside `data`, not an array. All other resource lists retain their existing response shapes.

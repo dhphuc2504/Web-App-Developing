@@ -403,8 +403,8 @@ test("unknown API routes return JSON 404; frontend deep links serve the SPA", as
   assert.doesNotMatch(page.text, /Rice bowl updated/);
 });
 test("unexpected database failures return safe HTTP 500", async () => {
-  const original = db.dish.count;
-  db.dish.count = () => {
+  const original = db.$transaction;
+  db.$transaction = () => {
     throw new Error("private database password details");
   };
   try {
@@ -413,7 +413,7 @@ test("unexpected database failures return safe HTTP 500", async () => {
     assert.equal(response.body.error.code, "INTERNAL_ERROR");
     assert.doesNotMatch(response.text, /password|private|stack/i);
   } finally {
-    db.dish.count = original;
+    db.$transaction = original;
   }
 });
 

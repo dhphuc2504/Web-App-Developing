@@ -627,3 +627,410 @@ input.photo-file-input {
 .friendly-dish-editor .text-button {
   color: #70573b;
 }
+
+.dish-query-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: end;
+  background: #f5efdf;
+  color: #26382e;
+  padding: 20px;
+  border: 1px solid #bba987;
+  margin: 20px 0;
+}
+.dish-query-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+}
+.dish-query-controls input,
+.dish-query-controls select {
+  color: #26382e;
+  background-color: #fffaf0;
+  min-width: 120px;
+  max-width: 230px;
+}
+.dish-query-controls form,
+.dish-pagination form {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.dish-pagination {
+  background: #f5efdf;
+  color: #26382e;
+  padding: 20px;
+  margin: 22px 0;
+}
+.dish-pagination input {
+  width: 90px;
+  color: #26382e;
+}
+.dish-pagination .button-row {
+  justify-content: center;
+}
+.dish-pagination p {
+  text-align: center;
+}
+.scroll-sentinel {
+  height: 2px;
+}
+.ticket-actions[hidden] {
+  display: none;
+}
+@media (max-width: 650px) {
+  .dish-query-controls label,
+  .dish-query-controls form {
+    width: 100%;
+  }
+  .dish-query-controls input,
+  .dish-query-controls select {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+.appended-spread + .appended-spread {
+  border-top: 8px solid #826346;
+  margin-top: 22px;
+}
+.board-toolbar {
+  flex-wrap: wrap;
+}
+.board-toolbar .dish-query-controls {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.board-toolbar > .button {
+  white-space: nowrap;
+}
+.dish-query-controls legend {
+  background: #f5efdf;
+  padding: 2px 10px;
+  color: #26382e;
+}
+.dish-query-controls select {
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23514431' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.menu-book,
+.ticket-stack {
+  overflow-anchor: none;
+}
+
+/* Fold advanced filters into the menu paper. */
+.dish-query-controls {
+  display: block;
+  min-width: 0;
+}
+.dish-search-row {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.dish-search-row > form {
+  flex: 1 1 320px;
+}
+.dish-search-row > form label {
+  flex: 1;
+  min-width: 180px;
+}
+.dish-search-row input {
+  width: 100%;
+  max-width: none;
+}
+.dish-query-controls button,
+.dish-pagination button {
+  background: #30483b;
+  color: #fff7e6;
+  border: 1px solid #30483b;
+}
+.dish-query-controls .advanced-search-toggle,
+.dish-filter-actions button[type="button"] {
+  background: transparent;
+  color: #30483b;
+  border-color: #9a8969;
+}
+.dish-advanced-panel {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #c7b794;
+}
+.dish-advanced-panel[hidden] {
+  display: none;
+}
+.dish-advanced-panel:not([hidden]) {
+  animation: unfold-filters 180ms ease-out;
+}
+.dish-advanced-panel form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+}
+.dish-advanced-panel input,
+.dish-advanced-panel select {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+.dish-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dish-filter-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.dish-filter-summary > span {
+  margin-right: 8px;
+}
+.dish-filter-summary .dish-filter-chip {
+  padding: 5px 10px;
+  background: #e8deca;
+  color: #30483b;
+  border: 1px solid #c7b794;
+  font-size: 12px;
+}
+.dish-pagination-settings {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.dish-pagination-settings legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.dish-pagination-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+}
+.dish-pagination-settings select {
+  color: #26382e;
+  background-color: #fffaf0;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23514431' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.dish-query-controls button:focus-visible,
+.dish-pagination button:focus-visible {
+  outline: 3px solid #a75e39;
+  outline-offset: 3px;
+}
+@keyframes unfold-filters {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dish-advanced-panel:not([hidden]) {
+    animation: none;
+  }
+}
+@media (max-width: 650px) {
+  .dish-search-row > form {
+    flex-basis: 100%;
+  }
+  .dish-search-row > label,
+  .advanced-search-toggle {
+    width: 100%;
+  }
+  .dish-advanced-panel form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dish-pagination-settings label {
+    flex: 1 1 160px;
+  }
+  .dish-pagination-settings select {
+    width: 100%;
+  }
+}
+.dish-query-controls input,
+.dish-query-controls select,
+.dish-pagination-settings select {
+  margin-bottom: 0;
+}
+.dish-query-controls label,
+.dish-pagination-settings label {
+  margin: 0;
+}
+
+/* Keep page navigation controls on one baseline, including the labelled input. */
+.dish-pagination .button-row,
+.dish-pagination .button-row form {
+  align-items: flex-end;
+  gap: 12px;
+}
+.dish-pagination .button-row form {
+  flex-wrap: nowrap;
+  margin: 0;
+}
+.dish-pagination .button-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+.dish-pagination .button-row input,
+.dish-pagination .button-row button {
+  box-sizing: border-box;
+  height: 48px;
+  margin: 0;
+}
+.dish-pagination .button-row input {
+  padding-block: 0;
+}
+.dish-pagination .button-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 0;
+}
+
+/* Browsing controls remain reachable while more dishes arrive. */
+.dish-pagination-settings {
+  align-items: flex-end;
+  padding: 14px 20px;
+  margin-top: 18px;
+  background: #f5efdf;
+  color: #26382e;
+  border: 1px solid #bba987;
+  width: 100%;
+}
+.dish-pagination-settings button {
+  background: #30483b;
+  color: #fff7e6;
+}
+.dish-pagination-settings > span {
+  font-size: 12px;
+  align-self: center;
+}
+/* Compact shared toolbar: controls in one row, count below. */
+.pagination-toolbar {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 24px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 8px 12px;
+  margin: 0;
+  border: 1px solid #bba987;
+  border-radius: 4px;
+  box-shadow: 0 4px 18px #0004;
+  text-align: center;
+}
+.pagination-toolbar .dish-pagination-settings {
+  width: auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.pagination-toolbar .dish-pagination-settings label,
+.pagination-toolbar .button-row label {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin: 0;
+}
+.pagination-toolbar .dish-pagination-settings select,
+.pagination-toolbar .button-row input,
+.pagination-toolbar .button-row button,
+.pagination-toolbar button {
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.pagination-toolbar .dish-pagination-settings select {
+  width: auto;
+  padding-right: 30px;
+}
+.pagination-toolbar .button-row input {
+  width: 58px;
+}
+.pagination-toolbar .button-row,
+.pagination-toolbar .button-row form {
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+}
+.pagination-toolbar .pagination-summary {
+  order: 5;
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.pagination-toolbar > p {
+  margin: 0;
+  font-size: 11px;
+}
+body:has(.pagination-toolbar) {
+  padding-bottom: 140px;
+}
+@media (max-width: 650px) {
+  .pagination-toolbar {
+    gap: 6px;
+    padding: 8px;
+    max-width: calc(100% - 16px);
+  }
+  .pagination-toolbar .dish-pagination-settings {
+    gap: 6px;
+  }
+  .pagination-toolbar .dish-pagination-settings label {
+    flex: 0 1 auto;
+  }
+  .pagination-toolbar .dish-pagination-settings label,
+  .pagination-toolbar .button-row label {
+    font-size: 10px;
+  }
+  .pagination-toolbar .button-row {
+    flex-wrap: wrap;
+  }
+  .pagination-toolbar button {
+    padding-inline: 8px;
+  }
+  body:has(.pagination-toolbar) {
+    padding-bottom: 180px;
+  }
+}

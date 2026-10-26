@@ -72,6 +72,7 @@ for (const [index, name] of [
     chef.id,
   );
 }
+if (process.argv.includes("--large")) { const {seedPaginationDishes} = await import("./demo/seed-pagination.js"); await seedPaginationDishes(db); }
 const uploadedPhotos = new Map();
 const mockPhotos = createPhotoService(
   {

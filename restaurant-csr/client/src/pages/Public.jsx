@@ -1,3 +1,8 @@
+import { useDishBrowser } from "../hooks/useDishBrowser.js";
+import {
+  DishFilters,
+  DishPagination,
+} from "../components/DishBrowserControls.jsx";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { menuApi } from "../api/resources.js";
@@ -108,7 +113,7 @@ function MenuPage({ items, side, page, onSelect }) {
         <span>{side ? "THE SELECTION" : "SANTAISHI-TEI / MENU"}</span>
       </header>
       {items.map((d) => (
-        <article className="menu-entry" key={d.id}>
+        <article className="menu-entry" key={d.id} id={"dish-" + d.id}>
           <button
             className="photo-trigger"
             onClick={() => onSelect(d)}
@@ -144,14 +149,9 @@ function MenuPage({ items, side, page, onSelect }) {
 }
 
 export function Menu() {
-  const [params, setParams] = useSearchParams(),
-    [selected, setSelected] = useState(null),
-    [search, setSearch] = useState(params.get("q") || "");
-  const resource = useResource(
-      (signal) => menuApi.list(params.toString(), signal),
-      params.toString(),
-      { keepPreviousData: true },
-    ),
+  const resource = useDishBrowser(menuApi.list),
+    { params, change } = resource;
+  const [selected, setSelected] = useState(null),
     [turn, setTurn] = useState(null),
     last = useRef(null),
     timer = useRef(null);
@@ -159,6 +159,7 @@ export function Menu() {
     if (resource.data) {
       const previous = last.current;
       if (
+        resource.mode === "pages" &&
         previous &&
         previous.page !== resource.data.page &&
         !matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -171,61 +172,13 @@ export function Menu() {
     }
   }, [resource.data]);
   useEffect(() => () => clearTimeout(timer.current), []);
-  useEffect(() => setSearch(params.get("q") || ""), [params.toString()]);
-  const change = (values) => {
-    const next = new URLSearchParams(params);
-    for (const [key, value] of Object.entries(values))
-      value ? next.set(key, String(value)) : next.delete(key);
-    setParams(next);
-  };
   return (
     <>
       <Heading title="Something delicious." kicker="食堂 · The dining room" />
       <ResourceState resource={resource} keepPreviousData>
         {(data) => (
           <>
-            <div className="menu-controls">
-              <nav className="category-tabs">
-                <button onClick={() => change({ category: "", page: 1 })}>
-                  All dishes
-                </button>
-                {data.categories.map((c) => (
-                  <button
-                    key={c.id}
-                    aria-pressed={params.get("category") === c.slug}
-                    onClick={() => change({ category: c.slug, page: 1 })}
-                  >
-                    {c.name}
-                  </button>
-                ))}
-              </nav>
-              <form
-                className="sort-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  change({ q: search, page: 1 });
-                }}
-              >
-                <input
-                  aria-label="Find a dish"
-                  placeholder="Find a dish…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <label htmlFor="menu-sort">Sort by</label>
-                <select
-                  id="menu-sort"
-                  value={params.get("sort") || "recommended"}
-                  onChange={(e) => change({ sort: e.target.value, page: 1 })}
-                >
-                  <option value="recommended">Chef’s selection</option>
-                  <option value="name">Name A–Z</option>
-                  <option value="price_asc">Price: low to high</option>
-                  <option value="price_desc">Price: high to low</option>
-                </select>
-                <button>Apply</button>
-              </form>
-            </div>
+            <DishFilters browser={resource} />
             <section
               className={
                 "menu-book " +
@@ -235,17 +188,45 @@ export function Menu() {
               }
               aria-label={"Menu page " + data.page}
             >
-              <div className="book-spread">
-                {[0, 1].map((side) => (
-                  <MenuPage
-                    onSelect={setSelected}
-                    key={side}
-                    items={data.items.slice(side * 2, side * 2 + 2)}
-                    side={side}
-                    page={data.page}
-                  />
-                ))}
-              </div>
+              {resource.mode === "pages" ? (
+                <div className="book-spread">
+                  {[0, 1].map((side) => (
+                    <MenuPage
+                      onSelect={setSelected}
+                      key={side}
+                      items={data.items.slice(
+                        side * Math.ceil(data.items.length / 2),
+                        (side + 1) * Math.ceil(data.items.length / 2),
+                      )}
+                      side={side}
+                      page={data.page}
+                    />
+                  ))}
+                </div>
+              ) : (
+                Array.from(
+                  { length: Math.max(1, Math.ceil(data.items.length / 4)) },
+                  (_, spread) => (
+                    <div
+                      className="book-spread appended-spread"
+                      key={data.items[spread * 4]?.id || "empty"}
+                    >
+                      {[0, 1].map((side) => (
+                        <MenuPage
+                          key={side}
+                          onSelect={setSelected}
+                          items={data.items.slice(
+                            spread * 4 + side * 2,
+                            spread * 4 + side * 2 + 2,
+                          )}
+                          side={side}
+                          page={spread + 1}
+                        />
+                      ))}
+                    </div>
+                  ),
+                )
+              )}
               <span className="book-ribbon" />
               {turn && (
                 <div className="book-turn-sheet" aria-hidden="true" inert>
@@ -274,28 +255,7 @@ export function Menu() {
                 </div>
               )}
             </section>
-            <nav className="book-pagination">
-              <button
-                disabled={resource.loading || !!turn || data.page === 1}
-                onClick={() => change({ page: data.page - 1 })}
-              >
-                ← Previous page
-              </button>
-              <span aria-live="polite">
-                PAGE {data.page} / {data.pageCount}
-                {resource.loading && (
-                  <small className="menu-loading">Loading menu…</small>
-                )}
-              </span>
-              <button
-                disabled={
-                  resource.loading || !!turn || data.page === data.pageCount
-                }
-                onClick={() => change({ page: data.page + 1 })}
-              >
-                Next page →
-              </button>
-            </nav>
+            <DishPagination browser={resource} locked={!!turn} />
             {resource.error && (
               <div className="menu-load-error">
                 <ErrorNotice error={resource.error} />

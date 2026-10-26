@@ -15,7 +15,10 @@
     "preview:fixture": "node scripts/preview-fixture.js",
     "format": "prettier --write \"client/src/**/*.{js,jsx,css}\" \"src/**/*.js\" \"tests/*.js\" \"scripts/*.js\" vite.config.js prisma.config.js",
     "demo:seed": "node scripts/demo-inventory.js",
-    "db:migrate:summary": "node scripts/migrate-public-summary.js"
+    "db:migrate:summary": "node scripts/migrate-public-summary.js",
+    "demo:seed:dishes": "node scripts/seed-pagination-dishes.js",
+    "db:migrate:search": "node scripts/migrate-dish-search.js",
+    "db:check:search": "node scripts/check-dish-search.js"
   },
   "keywords": [],
   "author": "",

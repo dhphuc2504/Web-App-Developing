@@ -1,3 +1,8 @@
+import { useDishBrowser } from "../hooks/useDishBrowser.js";
+import {
+  DishFilters,
+  DishPagination,
+} from "../components/DishBrowserControls.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { activity } from "../api/client.js";
 import { DishEditor } from "../components/DishEditor.jsx";
@@ -54,10 +59,23 @@ export function Login() {
     mutation = useMutation(),
     [email, setEmail] = useState(""),
     [password, setPassword] = useState("");
-  if (user)
+  if (user) {
+    const from = location.state?.from;
     return (
-      <Navigate to={user.role === "admin" ? "/admin" : "/kitchen"} replace />
+      <Navigate
+        to={
+          typeof from === "string" &&
+          from.startsWith("/") &&
+          !from.startsWith("//")
+            ? from
+            : user.role === "admin"
+              ? "/admin"
+              : "/kitchen"
+        }
+        replace
+      />
     );
+  }
   return (
     <section className="login-layout">
       <div>
@@ -114,11 +132,8 @@ export function Login() {
   );
 }
 export function Kitchen() {
-  const resource = useResource(dishesApi.list, "dishes", {
-      keepPreviousData: true,
-    }),
+  const resource = useDishBrowser(dishesApi.page),
     [editing, setEditing] = useState(null),
-    [search, setSearch] = useState(""),
     { confirm } = useApp(),
     mutation = useMutation();
   return (
@@ -150,102 +165,98 @@ export function Kitchen() {
         </div>
       )}
       <ResourceState resource={resource} keepPreviousData>
-        {(dishes) => (
+        {(data) => (
           <section data-board-workspace>
             <div className="board-toolbar">
-              <label>
-                Find a dish
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search the board…"
-                />
-              </label>
+              <DishFilters browser={resource} staff />
               <Link className="button" to="/kitchen/dishes/new">
                 ＋ Add a dish
               </Link>
             </div>
             {[
-              ["On the menu", (d) => d.isPublished && d.isAvailable],
-              ["In preparation", (d) => !d.isPublished],
-              ["Off the menu", (d) => d.isPublished && !d.isAvailable],
+              [
+                "On the menu",
+                (d) => !d.archivedAt && d.isPublished && d.isAvailable,
+              ],
+              ["In preparation", (d) => !d.archivedAt && !d.isPublished],
+              [
+                "Off the menu",
+                (d) => !d.archivedAt && d.isPublished && !d.isAvailable,
+              ],
+              ["Archived", (d) => !!d.archivedAt],
             ].map(([title, filter]) => (
               <section className="board-column" key={title}>
                 <h2 className="board-column-heading">{title}</h2>
                 <div className="ticket-stack">
-                  {dishes
-                    .filter(filter)
-                    .filter((d) =>
-                      d.name.toLowerCase().includes(search.toLowerCase()),
-                    )
-                    .map((d) => (
-                      <article
-                        className={
-                          "dish-ticket" +
-                          (editing?.id === d.id ? " ticket-lifted" : "")
-                        }
-                        key={d.id}
-                      >
-                        <p className="eyebrow">三太子亭 / {d.category.name}</p>
-                        <h3>{d.name}</h3>
-                        <div className="ticket-food">
-                          <Food dish={d} />
-                        </div>
-                        <p>{d.description}</p>
-                        <strong>{money(d.priceMinor)}</strong>
-                        <div className="ticket-actions">
-                          <Link to={"/kitchen/dishes/" + d.id + "/recipe"}>
-                            Recipe & ingredients ↗
-                          </Link>
-                          <button
-                            className="text-button"
-                            onClick={(event) => {
-                              const rect = event.currentTarget
-                                .closest(".dish-ticket")
-                                .getBoundingClientRect();
-                              setEditing({
-                                id: d.id,
-                                x:
-                                  rect.left +
-                                  rect.width / 2 -
-                                  window.innerWidth / 2,
-                                y:
-                                  rect.top +
-                                  rect.height / 2 -
-                                  window.innerHeight / 2,
-                              });
-                            }}
-                          >
-                            Edit dish
-                          </button>
-                          <button
-                            className="danger-link"
-                            onClick={async () => {
+                  {data.items.filter(filter).map((d) => (
+                    <article
+                      className={
+                        "dish-ticket" +
+                        (editing?.id === d.id ? " ticket-lifted" : "")
+                      }
+                      key={d.id}
+                      id={"dish-" + d.id}
+                    >
+                      <p className="eyebrow">三太子亭 / {d.category.name}</p>
+                      <h3>{d.name}</h3>
+                      <div className="ticket-food">
+                        <Food dish={d} />
+                      </div>
+                      <p>{d.description}</p>
+                      <strong>{money(d.priceMinor)}</strong>
+                      <div className="ticket-actions" hidden={!!d.archivedAt}>
+                        <Link to={"/kitchen/dishes/" + d.id + "/recipe"}>
+                          Recipe & ingredients ↗
+                        </Link>
+                        <button
+                          className="text-button"
+                          onClick={(event) => {
+                            const rect = event.currentTarget
+                              .closest(".dish-ticket")
+                              .getBoundingClientRect();
+                            setEditing({
+                              id: d.id,
+                              x:
+                                rect.left +
+                                rect.width / 2 -
+                                window.innerWidth / 2,
+                              y:
+                                rect.top +
+                                rect.height / 2 -
+                                window.innerHeight / 2,
+                            });
+                          }}
+                        >
+                          Edit dish
+                        </button>
+                        <button
+                          className="danger-link"
+                          onClick={async () => {
+                            if (
+                              await confirm(
+                                "Archive " +
+                                  d.name +
+                                  "? Its recipe and history will remain.",
+                              )
+                            ) {
                               if (
-                                await confirm(
-                                  "Archive " +
-                                    d.name +
-                                    "? Its recipe and history will remain.",
+                                await mutation.run(() =>
+                                  dishesApi.archive(d.id),
                                 )
-                              ) {
-                                if (
-                                  await mutation.run(() =>
-                                    dishesApi.archive(d.id),
-                                  )
-                                )
-                                  resource.reload();
-                              }
-                            }}
-                          >
-                            Archive
-                          </button>
-                        </div>
-                      </article>
-                    ))}
+                              )
+                                resource.reload();
+                            }
+                          }}
+                        >
+                          Archive
+                        </button>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </section>
             ))}
+            <DishPagination browser={resource} staff />
           </section>
         )}
       </ResourceState>
