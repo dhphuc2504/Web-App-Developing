@@ -4,6 +4,13 @@ import { allow } from '../middleware/security.js';
 export function createRoutes(c) {
  const r=Router(),admin=allow('admin'),kitchen=allow('admin','chef');
  r.get('/',c.public.home);r.get('/directory',c.public.directory);r.get('/menu',c.public.menu);r.get('/menu/:slug',c.public.dish);
+ const accountLimit=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:'draft-8',legacyHeaders:false});
+ for(const [path,kind,handler] of [['/signup','signup','signup'],['/forgot-password','forgot','forgot'],['/resend-verification','resend','resend'],['/verify-email','verify','verify'],['/reset-password','reset','reset']]){
+  r.get(path,c.accounts.form(kind));r.post(path,accountLimit,c.accounts[handler]);
+ }
+ r.get('/check-email',c.accounts.checkEmail);
+ r.get('/verification-complete',c.accounts.verified);
+ r.post('/admin/staff/:id/approval',admin,c.accounts.decide);
  r.get('/login',c.auth.loginForm);
  r.post('/login',rateLimit({windowMs:15*60*1000,limit:10,skipSuccessfulRequests:true,standardHeaders:'draft-8',legacyHeaders:false}),c.auth.login);
  r.post('/logout',kitchen,c.auth.logout);

@@ -6,6 +6,8 @@ export function createAuthService(repo) {
     async login(body) {
       const input=loginInput.parse(body), user=await repo.staff.byEmail(input.email);
       if (!user || !user.isActive || !await argon2.verify(user.passwordHash,input.password)) throw new AppError(422,'Invalid email or password.');
+      if(!user.emailVerifiedAt)throw new AppError(403,'Please verify your email before signing in.','EMAIL_UNVERIFIED');
+      if(user.approvalStatus!=='approved')throw new AppError(403,user.approvalStatus==='rejected'?'Your application was not approved. Contact the restaurant administrator.':'Your email is verified. Waiting for admin approval.','APPROVAL_REQUIRED');
       await repo.db.staffUser.update({where:{id:user.id},data:{lastLoginAt:new Date()}});
       return user;
     },
@@ -15,12 +17,12 @@ export function createAuthService(repo) {
       return repo.db.$transaction(async tx=>{
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(72183012)`;
         if(await tx.staffUser.count({where:{role:"admin"}}))throw new AppError(409,"The initial admin already exists.");
-        return tx.staffUser.create({data:{email:data.email,displayName:data.displayName,passwordHash,role:"admin"}});
+        return tx.staffUser.create({data:{email:data.email,displayName:data.displayName,passwordHash,role:"admin",emailVerifiedAt:new Date(),approvalStatus:"approved"}});
       });
     },
     async createChef(body) {
       const data=staffInput.parse(body);
-      return repo.db.staffUser.create({data:{email:data.email,displayName:data.displayName,passwordHash:await argon2.hash(data.password,{type:argon2.argon2id}),role:'chef'}});
+      return repo.db.staffUser.create({data:{email:data.email,displayName:data.displayName,passwordHash:await argon2.hash(data.password,{type:argon2.argon2id}),role:'chef',approvalStatus:'approved'}});
     },
   };
 }

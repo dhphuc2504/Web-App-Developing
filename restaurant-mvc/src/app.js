@@ -1,4 +1,7 @@
 import express from 'express';
+import { createAccountDelivery } from './services/account-delivery.js';
+import { createAccountService } from './services/account-service.js';
+import { createAccountController } from './controllers/account-controller.js';
 import session from 'express-session';
 import methodOverride from 'method-override';
 import helmet from 'helmet';
@@ -16,12 +19,12 @@ import { createKitchenController } from './controllers/kitchen-controller.js';
 import { csrf,loadUser } from './middleware/security.js';
 import { createRoutes } from './routes/index.js';
 import { AppError,publicError } from './lib/errors.js';
-export function createApp({db,store,config}) {
+export function createApp({db,store,config,accountDelivery}) {
  const app=express(),repo=createRepository(db);
  app.disable('x-powered-by');
  app.use((req,res,next)=>{Object.assign(res.locals,{user:null,csrf:'',flash:null,path:req.path,pageClass:'page-auth'});next();});
  if(config.NODE_ENV==='production')app.set('trust proxy',1);
- app.use(helmet({contentSecurityPolicy:{directives:{'upgrade-insecure-requests':config.NODE_ENV==='production'?[]:null}},strictTransportSecurity:config.NODE_ENV==='production'?undefined:false}));
+ app.use(helmet({contentSecurityPolicy:{directives:{'script-src':["'self'",'https://www.google.com/recaptcha/','https://www.gstatic.com/recaptcha/'], 'frame-src':["'self'",'https://www.google.com/recaptcha/','https://recaptcha.google.com/recaptcha/'], 'connect-src':["'self'",'https://www.google.com/recaptcha/'], 'upgrade-insecure-requests':config.NODE_ENV==='production'?[]:null}},strictTransportSecurity:config.NODE_ENV==='production'?undefined:false}));
  app.set('view engine','ejs');app.set('views',fileURLToPath(new URL('./views/',import.meta.url)));
  app.use(express.static(fileURLToPath(new URL('../public/',import.meta.url))));
  app.use(express.urlencoded({extended:false,limit:'64kb',parameterLimit:1000}));
@@ -33,6 +36,8 @@ export function createApp({db,store,config}) {
  app.use((req,res,next)=>{res.set('Cache-Control','no-store');res.locals.path=req.path;res.locals.pageClass=req.path==='/'?'page-entrance':req.path==='/directory'?'page-directory':req.path.startsWith('/menu')?'page-dining':req.path.startsWith('/kitchen')?'page-kitchen':req.path.startsWith('/admin')?'page-office':'page-auth';res.locals.money=value=>new Intl.NumberFormat('vi-VN').format(BigInt(value))+' ₫';res.locals.foodIndex=d=>/nigiri|sushi/i.test(d.slug)?0:/tempura/i.test(d.slug)?1:/ramen|miso/i.test(d.slug)?2:/teriyaki|grilled-salmon/i.test(d.slug)?4:/mochi|matcha/i.test(d.slug)?5:3;res.locals.user=null;res.locals.csrf='';res.locals.flash=req.session.flash;delete req.session.flash;next();});
  app.use(loadUser(repo));app.use(csrf);
  const auth=createAuthService(repo);
+ app.use((req,res,next)=>{res.locals.recaptchaSiteKey=config.RECAPTCHA_SITE_KEY || '';next();});
+ const accounts=createAccountService(db,accountDelivery || createAccountDelivery(config));
  // Bootstrap is development-only, loopback-only, and permanently closes after the first admin.
  const setupAllowed=async(req,res,next)=>{
   if(config.NODE_ENV!=='development' || !['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.ip) || await db.staffUser.count({where:{role:'admin'}}))return next(new AppError(404,'Page not found.'));
@@ -40,12 +45,17 @@ export function createApp({db,store,config}) {
  };
  app.get('/setup',setupAllowed,(req,res)=>res.render('auth/setup',{title:'Create initial admin'}));
  app.post('/setup',setupAllowed,async(req,res)=>{await auth.createInitialAdmin(req.body);req.session.flash='Admin created. Sign in to continue.';res.redirect(303,'/login');});
- app.use(createRoutes({auth:createAuthController(auth,repo),public:createPublicController(repo),catalog:createCatalogController(repo,createCatalogService(repo)),kitchen:createKitchenController(repo,createRecipeService(db),createStockService(db))}));
+ app.use(createRoutes({accounts:createAccountController(accounts),auth:createAuthController(auth,repo),public:createPublicController(repo),catalog:createCatalogController(repo,createCatalogService(repo)),kitchen:createKitchenController(repo,createRecipeService(db),createStockService(db))}));
  app.use((req,res,next)=>next(new AppError(404,'Page not found.')));
  app.use((error,req,res,next)=>{
   if(res.headersSent)return next(error);
   const safe=publicError(error);
-  if(req.path==='/login' && req.method==='POST')return res.status(safe.status).render('auth/login',{title:'Staff login',error:safe.message});
+  if(req.path==='/login' && req.method==='POST')return res.status(safe.status).render('auth/login',{title:'Staff login',error:safe.message,showResend:safe.code==='EMAIL_UNVERIFIED'});
+  const authForms={'/signup':['signup','Join the kitchen'],'/forgot-password':['forgot','Forgot password'],'/resend-verification':['resend','Resend verification'],'/verify-email':['verify','Verify your email'],'/reset-password':['reset','Choose a new password']};
+  if(req.method==='POST' && authForms[req.path] && [422,503].includes(safe.status)){
+   const [kind,title]=authForms[req.path];
+   return res.status(safe.status).render('auth/account',{kind,title,error:safe.message,input:{displayName:typeof req.body.displayName==='string'?req.body.displayName:'',email:typeof req.body.email==='string'?req.body.email:''},token:typeof req.body.token==='string'?req.body.token:''});
+  }
   res.status(safe.status).render('error',{title:`Error ${safe.status}`,error:safe.message,status:safe.status});
  });
  return app;

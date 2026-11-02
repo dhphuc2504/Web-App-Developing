@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 export async function testDatabase() {
  const engine=new PGlite();
- for(const name of ['202610120001_initial','202610120002_integrity','202610120003_recipe_allocation_check'])await engine.exec(await readFile(new URL(`../prisma/migrations/${name}/migration.sql`,import.meta.url),'utf8'));
+ for(const name of ['202610120001_initial','202610120002_integrity','202610120003_recipe_allocation_check','202611020001_staff_auth'])await engine.exec(await readFile(new URL(`../prisma/migrations/${name}/migration.sql`,import.meta.url),'utf8'));
  class EmbeddedPool extends pg.Pool {
   constructor(){super({max:1});this.tail=Promise.resolve();}
   async acquire(){let release;const previous=this.tail;this.tail=new Promise(resolve=>{release=resolve;});await previous;return release;}

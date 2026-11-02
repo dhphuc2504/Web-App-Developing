@@ -1,0 +1,7 @@
+<%- include('../partials/header') %>
+<section class="auth-layout"><div class="auth-atmosphere"><span class="auth-kanji" lang="ja">手紙</span><p class="eyebrow">三太子亭 · The kitchen</p><h1>One step<br>closer.</h1><p>Verify your email, then wait for the administrator to approve your chef account.</p></div>
+<div class="auth-form"><p class="eyebrow">Chef registration</p><h2>Check your email.</h2><p>If this address needs verification, a link will be sent to <strong><%= email %></strong>.</p><p>Check your inbox and spam folder. Open the link and press “Verify my email”. Verification links expire after 24 hours.</p>
+<form method="post" action="/resend-verification"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="email" value="<%= email %>"><button class="full-button" data-resend-button data-remaining="<%= remaining %>" <%= remaining>0?'disabled':'' %>>Resend verification email</button><p data-resend-status role="status"><%= remaining>0?`You can resend in ${remaining} seconds.`:'No email yet? You can request another link.' %></p></form>
+<noscript><p><a href="/check-email">Refresh this page</a> after one minute to enable resending.</p></noscript>
+<p><a href="/resend-verification">Use another email address</a> · <a href="/login">Return to sign in</a></p></div></section>
+<script src="/js/verification.js" defer></script><%- include('../partials/footer') %>

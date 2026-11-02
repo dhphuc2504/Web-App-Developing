@@ -7,7 +7,7 @@ export function createRepository(db) {
     staff: {
       byId: id => db.staffUser.findUnique({ where: { id } }),
       byEmail: email => db.staffUser.findUnique({ where: { email } }),
-      list: () => db.staffUser.findMany({ select: { id:true, email:true, displayName:true, role:true, isActive:true }, orderBy:{createdAt:'desc'}, take:100 }),
+      list: () => db.staffUser.findMany({ select: { id:true, email:true, displayName:true, role:true, isActive:true, approvalStatus:true, emailVerifiedAt:true }, orderBy:{createdAt:'desc'}, take:100 }),
     },
     menu: {
       list: (options={}) => db.dish.findMany({where:menuWhere(options),include:{category:true},orderBy:menuOrder[options.sort] || menuOrder.recommended,...(options.take?{skip:options.skip || 0,take:options.take}:{})}),

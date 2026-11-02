@@ -183,3 +183,7 @@ Schema changes require a new versioned migration created against a local develop
 Most staff lists show up to 100 records. Ingredient ledgers show the latest 30 movements, and the stock journal shows the latest 100 operations. Public menu pagination covers published dishes. Dish images use controlled local paths. Uploaded media, password-reset email, supplier management, expiry batches and multiple restaurant locations are outside the current scope.
 
 Production deployment requires HTTPS and reviewed proxy/database configuration with separate restricted runtime and migration users. Generated setting and food artwork, prompts and PNG masters are documented in [the asset record](public/images/japan/ASSETS.md). The application loads optimized JPG backgrounds.
+
+## Block 8: staff authentication
+
+Chef registration, email verification, administrator approval, persistent sessions and password recovery are documented in [the Block 8 setup guide](docs/block8-authentication.md). Follow that guide for the additive migration, SMTP and reCAPTCHA v2 configuration.

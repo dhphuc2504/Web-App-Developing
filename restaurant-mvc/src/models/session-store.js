@@ -17,5 +17,8 @@ export class PrismaSessionStore extends session.Store {
     const expires = new Date(value.cookie.expires || Date.now()+8*60*60*1000);
     this.db.session.updateMany({where:{sid},data:{expires}}).then(()=>done()).catch(()=>done(new Error('Session unavailable')));
   }
-  async prune() { await this.db.session.deleteMany({where:{expires:{lt:new Date()}}}); }
+  async prune() {
+    await this.db.session.deleteMany({where:{expires:{lt:new Date()}}});
+    await this.db.authToken.deleteMany({where:{expiresAt:{lt:new Date()}}});
+  }
 }

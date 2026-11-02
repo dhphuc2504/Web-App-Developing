@@ -1,5 +1,5 @@
 export class AppError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  constructor(status, message, code) { super(message); this.status = status; this.code = code; }
 }
 export function publicError(error) {
   if (error instanceof AppError) return error;

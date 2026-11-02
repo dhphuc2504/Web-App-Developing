@@ -14,7 +14,7 @@ export function loadUser(repo) {
     req.user=null;
     if (req.session.userId) {
       const user=await repo.staff.byId(req.session.userId);
-      if (user?.isActive) req.user={id:user.id,displayName:user.displayName,role:user.role};
+      if (user?.isActive && user.emailVerifiedAt && user.approvalStatus==='approved' && user.sessionVersion===(req.session.sessionVersion ?? 0)) req.user={id:user.id,displayName:user.displayName,role:user.role};
       else delete req.session.userId;
     }
     res.locals.user=req.user;

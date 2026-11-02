@@ -18,6 +18,7 @@ before(async()=>{
  const repo=createRepository(db),auth=createAuthService(repo);
  admin=await auth.createInitialAdmin({displayName:'Test Admin',email:'admin@example.test',password});
  chef=await auth.createChef({displayName:'Test Chef',email:'chef@example.test',password});
+ await db.staffUser.update({where:{id:chef.id},data:{emailVerifiedAt:new Date()}});
  catalog=createCatalogService(repo);stock=createStockService(db);
  category=await catalog.category(null,{name:'Mains',slug:'mains',isActive:'on'});
  dish=await catalog.dish(null,{categoryId:category.id,name:'Rice bowl',slug:'rice-bowl',priceMinor:'75000',isPublished:'on',isAvailable:'on'});
