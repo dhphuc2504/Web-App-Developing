@@ -1,4 +1,6 @@
-# 三太子亭 — Santaishi-tei: presentation materials
+# 三太子亭 — Santaishi-tei: Block 5 presentation archive
+
+This package preserves the Block 5 presentation. Its schema, endpoints, authentication scope and verification counts are historical. For the current Block 8 application, use [the product README](../README.md), [database reference](../docs/database/README.md) and [authentication guide](../docs/block8-authentication.md).
 
 Presentation and reference material for the **Tam Thái Tử** restaurant database coursework. The materials review the completed website, explain its application workflow, and document the SSR, MVC, Prisma, PRG and role-permission implementation.
 

@@ -10,6 +10,6 @@ The restaurant is branded 三太子亭 — Santaishi-tei across the public and s
 
 Background PNG masters are preserved. The application loads compressed JPG versions for the exterior, foyer, dining table, and kitchen.
 
-No schema migration is needed. Recipe editing does not deduct stock; preparation usage and waste remain separate journal operations. Admin/chef authorization, CSRF, optimistic recipe versions, exact inventory quantities, and DELETE method override remain enforced on the server.
+The visual changes described here do not require schema changes. Block 8 authentication has its own versioned migration. Recipe editing does not deduct stock; preparation usage and waste remain separate journal operations. Admin/chef authorization, CSRF, optimistic recipe versions, exact inventory quantities, and DELETE method override remain enforced on the server.
 
-Verification: 53 isolated tests covering backend behavior, server lifecycle and room transitions. Desktop and phone browser checks use disposable fixture data, independent of Supabase and the real environment file; they confirm full-screen panels, keyboard room changes, normal menu/pantry/journal navigation, and browser Back recovery.
+Current automated checks are described in [the product README](../README.md). The screenshots beside this document are historical design captures, not evidence of the current authentication screens.

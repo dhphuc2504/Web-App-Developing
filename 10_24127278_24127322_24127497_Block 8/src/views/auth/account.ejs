@@ -1,0 +1,17 @@
+<%- include('../partials/header') %>
+<section class="auth-layout"><div class="auth-atmosphere"><span class="auth-kanji" lang="ja">厨房</span><p class="eyebrow">三太子亭 · The kitchen</p><h1>A place<br>for your craft.</h1><p>Chef accounts require email verification and administrator approval.</p></div>
+<div class="auth-form"><a class="breadcrumb" href="/login">← STAFF SIGN IN</a><h2><%= title %></h2>
+<% if(error){ %><p class="error" role="alert"><%= error %></p><% } %>
+<form method="post" action="<%= {signup:'/signup',forgot:'/forgot-password',resend:'/resend-verification',verify:'/verify-email',reset:'/reset-password'}[kind] %>">
+<input type="hidden" name="_csrf" value="<%= csrf %>">
+<% if(['verify','reset'].includes(kind)){ %><input type="hidden" name="token" value="<%= token %>"><% } %>
+<% if(kind==='signup'){ %><label>Your name<input name="displayName" value="<%= input.displayName || '' %>" maxlength="100" autocomplete="name" required></label><% } %>
+<% if(['signup','forgot','resend'].includes(kind)){ %><label>Email address<input type="email" name="email" value="<%= input.email || '' %>" maxlength="254" autocomplete="email" required></label><% } %>
+<% if(['signup','reset'].includes(kind)){ %><label>Password<input type="password" name="password" minlength="12" maxlength="256" autocomplete="new-password" required><small>Use at least 12 characters.</small></label><label>Confirm password<input type="password" name="confirmPassword" minlength="12" maxlength="256" autocomplete="new-password" required></label><% } %>
+<% if(kind==='signup'){ %>
+ <% if(recaptchaSiteKey){ %><div class="g-recaptcha" data-sitekey="<%= recaptchaSiteKey %>"></div><script src="https://www.google.com/recaptcha/api.js" async defer></script><% }else{ %><p role="alert">Registration is unavailable until the administrator configures CAPTCHA.</p><% } %>
+<% } %>
+<% if(kind==='verify'){ %><p>Confirm that this is your email address. Approval by an administrator is still required.</p><% } %>
+<button class="full-button" <%= kind==='signup' && !recaptchaSiteKey?'disabled':'' %>><%= {signup:'Register as a chef',forgot:'Send reset link',resend:'Send verification email',verify:'Verify my email',reset:'Save new password'}[kind] %></button></form>
+<% if(['signup','verify'].includes(kind)){ %><p>Missing or expired verification email? <a href="/resend-verification">Send a new verification email</a>.</p><% } %>
+<p><a href="/login">Return to sign in</a></p></div></section><%- include('../partials/footer') %>

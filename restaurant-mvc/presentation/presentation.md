@@ -1,3 +1,5 @@
+> **Historical Block 5 presentation.** Current authentication and schema are documented in [the Block 8 guide](../docs/block8-authentication.md) and [database reference](../docs/database/README.md).
+
 # 三太子亭 — Santaishi-tei
 
 **Tam Thái Tử · Restaurant database exercise**  
@@ -116,7 +118,7 @@ The visual direction evolved through feedback: semi-3D trays became a menu book 
 
 The design evolved through approved feedback. The original semi-3D dish trays became a menu book on a dining-table background with click-based dish details. Kitchen tickets and paper editing gained a Japanese backdrop. Ingredient management became a pantry shelf with a list alternative and ledger. House guidance progressed from boxes to hanging signs, then to floor arrows. Repeated door effects were replaced with entrance-only sliding doors and short POV room transitions. The menu turn was slowed to 800 milliseconds, while the accepted kitchen design remained unchanged. The final restaurant identity, 三太子亭 — Santaishi-tei, represents Tam Thái Tử throughout the interface.
 
-**Project evidence:** `docs/ui-revision.md`, `README.md`, `public/js/`.
+**Project evidence:** `docs/design.md`, `README.md`, `public/js/`.
 
 ---
 
@@ -180,7 +182,7 @@ flowchart LR
 
 Development began with agreement on the public scope, roles and meaning of kitchen management. The code-first Prisma schema and versioned migrations defined the initial database. A minimal interface supported early checks of forms, permissions and transactions. Isolated database and HTTP tests preceded the detailed visual phase. The Japanese exterior, house, dining room, kitchen, pantry and office then developed through feedback. Revisions changed the menu, paper editing, guidance and motion while preserving the backend requirements. The final audit rechecked the original technical requirements and corrected bugs. This process connects product decisions, implementation and verification.
 
-**Project evidence:** `README.md`, `docs/ui-revision.md`, `tests/`.
+**Project evidence:** `README.md`, `docs/design.md`, `tests/`.
 
 ---
 
@@ -346,7 +348,7 @@ The recorded verification run passed 38 tests with zero failures. Schema validat
 
 The recorded verification run passed 38 automated tests with zero failures. Coverage includes HTTP behavior, role restrictions, escaped output, CSRF, DELETE overrides, PRG, archive protection and recipe/stock rules. Tests use PGlite through PrismaPg and Supertest. The embedded fixture serializes transactions on one connection, so the result does not establish production load or cross-connection concurrency behavior. Browser checks used fictional sample records. Final fixes protected archived records, preserved failed form values and selected recipe ingredients, and locked pending paper forms. Repository organization also changed to an ordinary exercise folder under the parent Git checkout.
 
-**Project evidence:** `README.md`, `tests/`, `docs/ui-revision.md`.
+**Project evidence:** `README.md`, `tests/`, `docs/design.md`.
 
 ---
 
@@ -704,7 +706,7 @@ Project paths identify evidence in the original source checkout. They are refere
 | Services | `restaurant-mvc/src/services/` |
 | Prisma configuration and adapter | `restaurant-mvc/src/config/` |
 | EJS views | `restaurant-mvc/src/views/` |
-| UI revisions | `restaurant-mvc/docs/ui-revision.md` |
+| UI revisions | `restaurant-mvc/docs/design.md` |
 | Artwork provenance and prompts | `restaurant-mvc/public/images/japan/ASSETS.md` |
 | Automated checks and fixtures | `restaurant-mvc/tests/` |
 | Browser enhancements | `restaurant-mvc/public/js/` |

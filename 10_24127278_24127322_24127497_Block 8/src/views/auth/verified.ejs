@@ -1,0 +1,4 @@
+<%- include('../partials/header') %>
+<section class="auth-layout"><div class="auth-atmosphere"><span class="auth-kanji" lang="ja">厨房</span><p class="eyebrow">三太子亭 · The kitchen</p><h1>Email<br>verified.</h1></div><div class="auth-form"><h2>Your email is verified.</h2>
+<% if(result==='approved'){ %><p>Your account is approved. You can now sign in.</p><% }else if(result==='pending'){ %><p>Waiting for admin approval.</p><p>The restaurant administrator must approve your chef account before you can enter the kitchen. You do not need another verification email.</p><% }else{ %><p>Your account does not currently have access. Contact the restaurant administrator.</p><% } %>
+<p><a href="/login">Continue to sign in</a></p></div></section><%- include('../partials/footer') %>
