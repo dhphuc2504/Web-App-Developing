@@ -8,7 +8,8 @@
 | [SQL reference](database/schema.sql) | Ordered migration SQL for study or an empty database |
 | [HTTP routes](routes.md) | Current SSR endpoints, methods and access rules |
 | [Visual design](design.md) | Japanese room navigation and progressive enhancements |
-| [Block 5 presentation archive](../presentation/README.md) | Original presentation and historical screenshots |
+| [Block 8 presentation](../presentation/README.md) | Current HTML slides and separate speaker notes |
+| [Block 5 presentation archive](../archive/presentation-block5/README.md) | Original presentation and historical screenshots |
 
 JPG files in this folder are historical UI captures. Runtime artwork lives under `public/images/`; its provenance is in [ASSETS.md](../public/images/japan/ASSETS.md).
 

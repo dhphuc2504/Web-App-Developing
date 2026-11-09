@@ -15,6 +15,7 @@ export async function testDatabase() {
     "202610190001_public_preparation_summary",
     "202610260001_dish_search_indexes",
     "202610260002_dish_fuzzy_search",
+    "202611090001_jwt_accounts",
   ])
     await engine.exec(
       await readFile(

@@ -34,7 +34,11 @@ export function errorHandler(error, req, res, next) {
   if (error instanceof AppError)
     return failure(
       res,
-      [401, 403].includes(error.status) ? error.status : 200,
+      error.status >= 500
+        ? 500
+        : [401, 403].includes(error.status)
+          ? error.status
+          : 200,
       error.code,
       error.message,
       error.fields,

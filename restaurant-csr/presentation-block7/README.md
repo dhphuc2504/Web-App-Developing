@@ -1,5 +1,7 @@
 # Santaishi-tei · Block 7 presentation
 
+These are historical **Block 7** presentation materials. They describe that exercise's implementation and evidence, not the current Block 9 authentication system. For current setup, JWT/email-OTP login, permissions and account deletion, see the [application README](../README.md) and [Block 9 guide](../docs/block9-authentication.md). The slide content and speaker notes remain specific to Block 7.
+
 A 12-slide HTML presentation about server pagination, filtering, sorting, full-text/fuzzy search and the decisions behind the restaurant application.
 
 ## Open the slides
@@ -29,6 +31,6 @@ Then open `http://127.0.0.1:8087`. Run that command from this presentation direc
 
 `index.html`, `presentation.css` and `presentation.js` provide the slides. `assets/` contains local images copied from the application and its implementation captures. No remote dependencies are required.
 
-The deck covers the final product first, then requirements, dataset preparation, request flow, bounded SQL paging, three pagination modes, search, fuzzy-search bug fixes, UX/bookmark decisions and verification. Current automated test results are dated 2 November 2026; historical live-database observations are explicitly dated 26 October 2026.
+The deck covers the final product first, then requirements, dataset preparation, request flow, bounded SQL paging, three pagination modes, search, fuzzy-search bug fixes, UX/bookmark decisions and verification. The deck's recorded automated test results are dated 2 November 2026; historical live-database observations are explicitly dated 26 October 2026.
 
-The Block 6 presentation in `../presentation/` is unchanged. The existing submission ZIP was not rebuilt by this presentation task.
+The [Block 6 presentation](../presentation/README.md) is retained separately. Submission ZIPs are independent snapshots and do not automatically incorporate later application or documentation changes.

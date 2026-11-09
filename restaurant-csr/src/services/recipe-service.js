@@ -1,8 +1,9 @@
 import { recipeInput, uuid } from "../validators/input.js";
+import { canEditDish } from "../middleware/security.js";
 import { AppError } from "../lib/errors.js";
 export function createRecipeService(db) {
   return {
-    async save(dishId, body, userId) {
+    async save(dishId, body, userId, actor) {
       uuid.parse(dishId);
       const data = recipeInput.parse(body);
       if (
@@ -21,6 +22,7 @@ export function createRecipeService(db) {
         });
         if (!dish || dish.archivedAt)
           throw new AppError(404, "Dish not found.");
+        if (actor) canEditDish(actor, dish);
         if ((dish.recipe?.version || 0) !== data.version)
           throw new AppError(
             409,

@@ -1,5 +1,7 @@
 # Santaishi-tei — Block 6 presentation
 
+These are historical **Block 6** presentation materials. They describe that exercise's implementation and evidence, not the current Block 9 authentication system. For current setup, JWT/email-OTP login, permissions and account deletion, see the [application README](../README.md) and [Block 9 guide](../docs/block9-authentication.md). The slide content and speaker notes remain specific to Block 6.
+
 Open `index.html` directly in a browser. No application server, database, internet connection or credentials are required. Keep the whole folder together when copying or moving it.
 
 ## Presenting
@@ -12,7 +14,7 @@ The toolbar is visible by default, with a slide selector for jumping directly to
 - Presenter script: `speaker-notes.md` is separate from the projected HTML. Use a second device or printed copy; do not open it on the projected screen.
 - Print / PDF: print all 14 slides in landscape format. Enable background graphics in the browser print dialog. Print the script separately if needed.
 
-Suggested length: 12–15 minutes including a three-minute live demo. Prepare the application and designated demo accounts separately. No credentials are included in these materials.
+Suggested length: 12–15 minutes including a three-minute live demo. Prepare the application and designated demo accounts separately. When demonstrating the current application, allow time for the email OTP step; mock email addresses work only in the disposable preview, where codes appear in the terminal. No credentials are included in these materials.
 
 ## Contents and evidence
 

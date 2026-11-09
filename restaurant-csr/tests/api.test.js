@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { testDatabase } from "./database.js";
 import { createApp } from "../src/app.js";
-import { PrismaSessionStore } from "../src/models/session-store.js";
+import { createJwtService } from "../src/services/jwt-service.js";
+const config = { NODE_ENV: "test", JWT_SECRET: "test-only-secret-".repeat(4) };
 import { createRepository } from "../src/models/repository.js";
 import { createAuthService } from "../src/services/auth-service.js";
 import { createCatalogService } from "../src/services/catalog-service.js";
@@ -27,12 +28,17 @@ before(async () => {
     displayName: "Chef",
     password,
   });
+  await db.staffUser.update({
+    where: { id: chef.id },
+    data: { emailVerifiedAt: new Date() },
+  });
   category = await catalog.category(null, {
     name: "Mains",
     slug: "mains",
     isActive: true,
   });
   dish = await catalog.dish(null, {
+    chefId: chef.id,
     name: "Rice bowl",
     slug: "rice-bowl",
     categoryId: category.id,
@@ -57,27 +63,22 @@ before(async () => {
   );
   app = createApp({
     db,
-    store: new PrismaSessionStore(db),
-    config: { NODE_ENV: "test", SESSION_SECRET: "test-only-secret-".repeat(4) },
+    config,
   });
 });
 after(async () => {
   await fixture?.close();
 });
 async function login(role = "admin") {
-  const agent = request.agent(app),
-    initial = await agent.get("/api/session");
-  const response = await agent
-    .post("/api/session")
-    .set("X-CSRF-Token", initial.body.data.csrfToken)
-    .send({ email: role + "@example.test", password });
-  assert.equal(response.status, 200);
-  assert.equal(response.body.ok, true);
-  return { agent, token: response.body.data.csrfToken };
+  const token = await createJwtService(config).issue(
+    role === "admin" ? admin : chef,
+  );
+  const agent = request.agent(app).set("Authorization", "Bearer " + token);
+  return { agent, token };
 }
 const send = (session, method, path, body) =>
   session.agent[method]("/api" + path)
-    .set("X-CSRF-Token", session.token)
+    .set("Authorization", "Bearer " + session.token)
     .send(body);
 test("public menu is JSON, paginated, hides drafts and serializes BigInt", async () => {
   await db.dish.create({
@@ -99,23 +100,15 @@ test("public menu is JSON, paginated, hides drafts and serializes BigInt", async
     "NOT_FOUND",
   );
 });
-test("session bootstrap gives anonymous CSRF state; login rotates cookie", async () => {
-  const agent = request.agent(app),
-    first = await agent.get("/api/session");
-  assert.equal(first.body.data.user, null);
-  const second = await agent
-    .post("/api/session")
-    .set("X-CSRF-Token", first.body.data.csrfToken)
-    .send({ email: "chef@example.test", password });
-  assert.notEqual(
-    first.headers["set-cookie"][0].split(";")[0],
-    second.headers["set-cookie"][0].split(";")[0],
-  );
-  assert.equal(second.body.data.user.role, "chef");
-  assert.doesNotMatch(second.text, /passwordHash|password_hash|Fixture-only/);
+test("JWT identity endpoint returns safe claims without cookies", async () => {
+  const session = await login("chef");
+  const result = await session.agent.get("/api/auth/me");
+  assert.equal(result.body.data.user.role, "chef");
+  assert.equal(result.headers["set-cookie"], undefined);
+  assert.doesNotMatch(result.text, /passwordHash|password_hash|Fixture-only/);
 });
 test("unauthenticated and forbidden requests use 401 and 403", async () => {
-  assert.equal((await request(app).get("/api/dishes")).status, 401);
+  assert.equal((await request(app).get("/api/staff/dishes")).status, 401);
   const session = await login("chef");
   assert.equal((await session.agent.get("/api/chefs")).status, 403);
   const response = await send(session, "post", "/stock-operations", {
@@ -127,19 +120,15 @@ test("unauthenticated and forbidden requests use 401 and 403", async () => {
   assert.equal(response.status, 403);
   assert.equal(response.body.error.code, "FORBIDDEN");
 });
-test("bad credentials use 401; CSRF is required for mutations", async () => {
-  const agent = request.agent(app),
-    initial = await agent.get("/api/session");
-  const response = await agent
-    .post("/api/session")
-    .set("X-CSRF-Token", initial.body.data.csrfToken)
+test("bad credentials return HTTP 200; missing Bearer token cannot mutate", async () => {
+  const response = await request(app)
+    .post("/api/auth/login")
     .send({ email: "admin@example.test", password: "incorrect" });
-  assert.equal(response.status, 401);
+  assert.equal(response.status, 200);
   assert.equal(response.body.error.code, "INVALID_CREDENTIALS");
-  const session = await login();
   assert.equal(
-    (await session.agent.delete("/api/dishes/" + dish.id)).status,
-    403,
+    (await request(app).delete("/api/dishes/" + dish.id)).status,
+    401,
   );
 });
 test("validation returns HTTP 200 with stable code and input fields", async () => {
@@ -210,7 +199,7 @@ test("JSON content type and malformed JSON have managed responses", async () => 
   const session = await login();
   const wrong = await session.agent
     .post("/api/categories")
-    .set("X-CSRF-Token", session.token)
+    .set("Authorization", "Bearer " + session.token)
     .type("form")
     .send({ name: "Test" });
   assert.equal(wrong.status, 200);
@@ -348,21 +337,20 @@ test("chef management excludes credentials and cannot grant admin", async () => 
   );
   assert.equal(removed.body.data.isActive, false);
 });
-test("deactivated staff lose existing-session access and logout clears state", async () => {
+test("issued JWT is stateless until expiry and logout sets no cookies", async () => {
   const session = await login("chef");
   await db.staffUser.update({
     where: { id: chef.id },
     data: { isActive: false },
   });
-  assert.equal((await session.agent.get("/api/dishes")).status, 401);
+  assert.equal((await session.agent.get("/api/auth/me")).status, 200);
   await db.staffUser.update({
     where: { id: chef.id },
     data: { isActive: true },
   });
-  const manager = await login();
-  const response = await send(manager, "delete", "/session");
+  const response = await send(session, "delete", "/auth/logout");
   assert.equal(response.body.ok, true);
-  assert.equal((await manager.agent.get("/api/dishes")).status, 401);
+  assert.equal(response.headers["set-cookie"], undefined);
 });
 test("actual DELETE archives, while GET and POST override cannot mutate", async () => {
   const session = await login();
@@ -375,8 +363,8 @@ test("actual DELETE archives, while GET and POST override cannot mutate", async 
     },
   });
   assert.equal(
-    (await session.agent.get("/api/dishes/" + row.id + "?_method=DELETE")).body
-      .data.archivedAt,
+    (await session.agent.get("/api/staff/dishes/" + row.id + "?_method=DELETE"))
+      .body.data.archivedAt,
     null,
   );
   assert.equal(
@@ -510,7 +498,7 @@ test("multiple reads and corrections reject attempts to make stock negative", as
 });
 
 test("staff can edit public preparation summaries and changing slug preserves the published story", async () => {
-  const session = await login("chef");
+  const session = await login("admin");
   const saved = await send(session, "post", "/dishes", {
     name: "Public story dish",
     slug: "public-story-dish",
@@ -547,7 +535,7 @@ test("staff can edit public preparation summaries and changing slug preserves th
   });
   assert.equal(clear.body.data.preparationSummary, null);
 });
-test("photo endpoint enforces authentication, CSRF and validates multipart files", async () => {
+test("photo endpoint enforces Bearer authentication and validates multipart files", async () => {
   assert.equal(
     (
       await request(app)
@@ -557,17 +545,9 @@ test("photo endpoint enforces authentication, CSRF and validates multipart files
     401,
   );
   const session = await login("chef");
-  assert.equal(
-    (
-      await session.agent
-        .post("/api/dish-photos")
-        .attach("photo", Buffer.from("bad"), "dish.png")
-    ).status,
-    403,
-  );
   const bad = await session.agent
     .post("/api/dish-photos")
-    .set("X-CSRF-Token", session.token)
+    .set("Authorization", "Bearer " + session.token)
     .attach("photo", Buffer.from("bad"), "dish.png");
   assert.equal(bad.status, 200);
   assert.equal(bad.body.error.code, "INVALID_PHOTO");
@@ -579,11 +559,11 @@ test("photo endpoint enforces authentication, CSRF and validates multipart files
     .toBuffer();
   const valid = await session.agent
     .post("/api/dish-photos")
-    .set("X-CSRF-Token", session.token)
+    .set("Authorization", "Bearer " + session.token)
     .attach("photo", bytes, "dish.png");
   assert.equal(valid.body.error.code, "STORAGE_NOT_CONFIGURED");
 });
-test("chef creates automatic unique slugs and controls draft publication without changing URLs", async () => {
+test("chef creates automatic slugs and admin controls publication without changing URLs", async () => {
   const s = await login("chef");
   const body = {
     name: "New chef special",
@@ -596,10 +576,15 @@ test("chef creates automatic unique slugs and controls draft publication without
   assert.equal(first.body.data.isPublished, false);
   const second = await send(s, "post", "/dishes", body);
   assert.equal(second.body.data.slug, "new-chef-special-2");
-  const edited = await send(s, "patch", "/dishes/" + first.body.data.id, {
-    name: "Renamed special",
-    isPublished: true,
-  });
+  const edited = await send(
+    await login(),
+    "patch",
+    "/dishes/" + first.body.data.id,
+    {
+      name: "Renamed special",
+      isPublished: true,
+    },
+  );
   assert.equal(edited.body.data.slug, "new-chef-special");
   assert.equal(edited.body.data.isPublished, true);
   const bad = await send(s, "patch", "/dishes/" + first.body.data.id, {

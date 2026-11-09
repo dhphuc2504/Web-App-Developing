@@ -9,6 +9,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { AppProvider, useApp } from "./components/AppContext.jsx";
+import { Account } from "./pages/Account.jsx";
 import { Home, Directory, Menu, DishDetail } from "./pages/Public.jsx";
 import {
   Guard,
@@ -79,6 +80,15 @@ function Shell() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/menu/:slug" element={<DishDetail />} />
           <Route path="/login" element={<Login />} />
+          {[
+            "/signup",
+            "/verify-email",
+            "/resend-verification",
+            "/forgot-password",
+            "/reset-password",
+          ].map((path) => (
+            <Route key={path} path={path} element={<Account key={path} />} />
+          ))}
           <Route
             path="/kitchen"
             element={

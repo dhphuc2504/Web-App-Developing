@@ -36,6 +36,8 @@ export function createRepository(db) {
             displayName: true,
             role: true,
             isActive: true,
+            approvalStatus: true,
+            emailVerifiedAt: true,
           },
           orderBy: { createdAt: "desc" },
           take: 100,

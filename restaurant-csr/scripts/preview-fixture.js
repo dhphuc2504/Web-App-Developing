@@ -3,7 +3,7 @@ import express from "express";
 import { createPhotoService } from "../src/services/photo-service.js";
 import { testDatabase } from "../tests/database.js";
 import { createApp } from "../src/app.js";
-import { PrismaSessionStore } from "../src/models/session-store.js";
+
 import { createRepository } from "../src/models/repository.js";
 import { createAuthService } from "../src/services/auth-service.js";
 import { createCatalogService } from "../src/services/catalog-service.js";
@@ -25,6 +25,10 @@ const chef = await auth.createChef({
   displayName: "Demo Chef",
   email: "chef@example.test",
   password,
+});
+await db.staffUser.update({
+  where: { id: chef.id },
+  data: { emailVerifiedAt: new Date() },
 });
 const category = await catalog.category(null, {
   name: "House selection",
@@ -50,6 +54,7 @@ for (const [index, name] of [
   const slug = name.toLowerCase().replaceAll(" ", "-"),
     dish = await catalog.dish(null, {
       name,
+      chefId: chef.id,
       slug,
       categoryId: category.id,
       priceMinor: String(75000 + index * 10000),
@@ -72,7 +77,10 @@ for (const [index, name] of [
     chef.id,
   );
 }
-if (process.argv.includes("--large")) { const {seedPaginationDishes} = await import("./demo/seed-pagination.js"); await seedPaginationDishes(db); }
+if (process.argv.includes("--large")) {
+  const { seedPaginationDishes } = await import("./demo/seed-pagination.js");
+  await seedPaginationDishes(db);
+}
 const uploadedPhotos = new Map();
 const mockPhotos = createPhotoService(
   {
@@ -104,10 +112,15 @@ const app = createApp({
     },
   },
   db,
-  store: new PrismaSessionStore(db),
+  delivery: {
+    captcha: async () => {},
+    send: async ({ email, purpose, token }) =>
+      console.log(`[DISPOSABLE DEMO ONLY] ${email} ${purpose}: ${token}`),
+  },
   config: {
     NODE_ENV: "test",
-    SESSION_SECRET: "Disposable-fixture-session-secret-only-2026",
+    JWT_SECRET: "Disposable-fixture-jwt-secret-only-2026",
+    APP_ORIGIN: "http://127.0.0.1:3003",
   },
 });
 const preview = express();
@@ -124,7 +137,11 @@ preview.use((req, res, next) => {
       res.on("finish", () => {
         if (!boardFailureUsed && res.statusCode === 200) failBoardRead = true;
       });
-    if (req.method === "GET" && req.path === "/api/dishes" && failBoardRead) {
+    if (
+      req.method === "GET" &&
+      req.path === "/api/staff/dishes" &&
+      failBoardRead
+    ) {
       failBoardRead = false;
       boardFailureUsed = true;
       return res.status(500).json({

@@ -1,3 +1,6 @@
+import { useApp } from "./AppContext.jsx";
+import { useResource } from "../hooks/useResource.js";
+import { chefsApi } from "../api/resources.js";
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { dishesApi, photosApi } from "../api/resources.js";
@@ -15,6 +18,13 @@ const editable = [
   "isAvailable",
 ];
 export function DishEditor({ id, record, categories, onDone, onCancel }) {
+  const { user } = useApp(),
+    admin = user?.role === "admin";
+  const chefs = useResource(
+    (signal) => (admin ? chefsApi.list(signal) : Promise.resolve([])),
+    "dish-chefs",
+  );
+  const [chefId, setChefId] = useState(record.chefId || "");
   const [values, setValues] = useState(() => ({
     name: record.name || "",
     categoryId: record.categoryId || "",
@@ -85,12 +95,12 @@ export function DishEditor({ id, record, categories, onDone, onCancel }) {
       const next = {
         ...values,
         imagePath,
-        isPublished: publish,
+        ...(admin ? { isPublished: publish, chefId: chefId || null } : {}),
         imageAlt: values.imageAlt || values.name,
       };
       const body = id
         ? Object.fromEntries(
-            [...editable, "isPublished"]
+            [...editable, ...(admin ? ["isPublished", "chefId"] : [])]
               .filter(
                 (key) => String(next[key] ?? "") !== String(record[key] ?? ""),
               )
@@ -109,14 +119,22 @@ export function DishEditor({ id, record, categories, onDone, onCancel }) {
   const categoryOptions = categories
     .filter((c) => c.isActive || c.id === values.categoryId)
     .map((c) => [c.id, c.name + (c.isActive ? "" : " (inactive)")]);
+  if (id && !admin && record.chefId !== user?.id)
+    return (
+      <section className="form-panel">
+        <p>Only the assigned chef or an administrator can edit this dish.</p>
+        <button onClick={cancel}>Return to the kitchen</button>
+      </section>
+    );
   return (
     <section className="form-panel editor-panel paper-route friendly-dish-editor">
       <div className="form-intro">
         <span className="large-kanji">丁寧</span>
         <h2>{id ? "Refine your dish." : "Create something delicious."}</h2>
         <p>
-          Add the details your guests will see. Save a draft to finish later, or
-          publish when it is ready.
+          {admin
+            ? "Add the details your guests will see. Save a draft to finish later, or publish when it is ready."
+            : "Add the details your guests will see. An administrator manages publication; your edits keep the current status."}
         </p>
         <p className="status-tag">
           {record.isPublished
@@ -266,8 +284,32 @@ export function DishEditor({ id, record, categories, onDone, onCancel }) {
           />
         </details>
         <section className="dish-form-section">
-          <h3>Ready for the menu?</h3>
-          <p>
+          <h3>{admin ? "Ready for the menu?" : "Save your recipe sheet"}</h3>
+          {admin && (
+            <label>
+              Responsible chef
+              <select
+                value={chefId}
+                onChange={(e) => setChefId(e.target.value)}
+              >
+                <option value="">Unassigned</option>
+                {chefs.data
+                  ?.filter((c) => c.isActive && c.approvalStatus === "approved")
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.displayName}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          )}
+          {!admin && (
+            <p>
+              Only administrators can publish or archive dishes. Saving keeps
+              the current publication status.
+            </p>
+          )}
+          <p hidden={!admin}>
             Drafts are visible only to staff.{" "}
             {record.isPublished
               ? "Saving as a draft removes this dish from the public menu."
@@ -276,6 +318,7 @@ export function DishEditor({ id, record, categories, onDone, onCancel }) {
           {stage && <p role="status">{stage}</p>}
           <div className="button-row dish-save-actions">
             <button
+              hidden={!admin}
               name="publication"
               value="publish"
               disabled={mutation.saving || !!photoError}
@@ -288,7 +331,7 @@ export function DishEditor({ id, record, categories, onDone, onCancel }) {
               className="secondary"
               disabled={mutation.saving || !!photoError}
             >
-              Save draft
+              {admin ? "Save draft" : "Save changes"}
             </button>
             <button
               type="button"

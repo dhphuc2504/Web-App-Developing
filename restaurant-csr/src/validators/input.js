@@ -36,6 +36,7 @@ export const categoryInput = z.object({
   isActive: flag,
 });
 export const dishInput = z.object({
+  chefId: uuid.nullable().optional(),
   categoryId: uuid,
   name: text(150),
   slug: slug.optional(),

@@ -1,3 +1,4 @@
+import { tokenStore } from "./token.js";
 export const API_CONFIG = Object.freeze({
   root: "/api",
   headers: { Accept: "application/json" },
@@ -15,7 +16,6 @@ export function createApiClient({
   onUnauthorized = () => {},
   config = API_CONFIG,
 } = {}) {
-  let csrfToken = null;
   async function request(
     path,
     {
@@ -24,23 +24,25 @@ export function createApiClient({
       signal,
       timeoutMs = config.timeoutMs,
       background = false,
+      blockUI = true,
     } = {},
   ) {
-    const blocking = method !== "GET" || !background;
+    const blocking = blockUI && (method !== "GET" || !background);
     if (blocking) onPending(1);
     try {
-      if (method !== "GET" && !csrfToken) await request("/session", { signal });
       let response;
       try {
         response = await fetchImpl(config.root + path, {
           method,
-          credentials: "same-origin",
+          credentials: "omit",
           headers: {
             ...config.headers,
             ...(body !== undefined && !(body instanceof FormData)
               ? { "Content-Type": "application/json" }
               : {}),
-            ...(method !== "GET" ? { "X-CSRF-Token": csrfToken } : {}),
+            ...(tokenStore.get()
+              ? { Authorization: "Bearer " + tokenStore.get() }
+              : {}),
           },
           ...(body !== undefined
             ? { body: body instanceof FormData ? body : JSON.stringify(body) }
@@ -81,8 +83,10 @@ export function createApiClient({
         );
       }
       if (!response.ok) {
-        if (result.error?.code === "CSRF_INVALID") csrfToken = null;
-        if (response.status === 401) onUnauthorized();
+        if (response.status === 401) {
+          tokenStore.set(null);
+          onUnauthorized();
+        }
         throw new ApiError(
           "http",
           result.error?.code || "HTTP_ERROR",
@@ -92,7 +96,6 @@ export function createApiClient({
         );
       }
       if (!result.ok) {
-        if (result.error.code === "CSRF_INVALID") csrfToken = null;
         throw new ApiError(
           "application",
           result.error.code,
@@ -101,8 +104,8 @@ export function createApiClient({
           response.status,
         );
       }
-      if (result.data?.csrfToken) csrfToken = result.data.csrfToken;
-      if (path === "/session" && method === "DELETE") csrfToken = null;
+      if (result.data?.accessToken) tokenStore.set(result.data.accessToken);
+      if (path === "/auth/logout" && method === "DELETE") tokenStore.set(null);
       return result.data;
     } finally {
       if (blocking) onPending(-1);

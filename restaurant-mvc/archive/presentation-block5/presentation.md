@@ -1,4 +1,4 @@
-> **Historical Block 5 presentation.** Current authentication and schema are documented in [the Block 8 guide](../docs/block8-authentication.md) and [database reference](../docs/database/README.md).
+> **Historical Block 5 presentation.** Current authentication and schema are documented in [the Block 8 guide](../../docs/block8-authentication.md) and [database reference](../../docs/database/README.md).
 
 # 三太子亭 — Santaishi-tei
 

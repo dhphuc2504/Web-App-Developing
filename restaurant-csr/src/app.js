@@ -1,7 +1,13 @@
 import express from "express";
-import session from "express-session";
+import { allowedOrigins } from "./lib/origins.js";
+import { createJwtService } from "./services/jwt-service.js";
+import { createLoginService } from "./services/login-service.js";
+import { createAccountService } from "./services/account-service.js";
+import { createAccountDelivery } from "./services/account-delivery.js";
+import { success } from "./lib/responses.js";
+import { allow } from "./middleware/security.js";
+import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
-import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 import { createRepository } from "./models/repository.js";
@@ -15,16 +21,37 @@ import { loadUser } from "./middleware/security.js";
 import { createRoutes } from "./routes/index.js";
 import { AppError } from "./lib/errors.js";
 import { failure, errorHandler } from "./lib/responses.js";
-export function createApp({ db, store, config, photoService }) {
+export function createApp({
+  db,
+  config,
+  photoService,
+  delivery: injectedDelivery,
+}) {
+  const origins = allowedOrigins(config);
   const app = express(),
     repo = createRepository(db),
-    photos = photoService || createPhotoService(config);
+    photos = photoService || createPhotoService(config),
+    jwt = createJwtService(config),
+    delivery = injectedDelivery || createAccountDelivery(config),
+    login = createLoginService(db, delivery, jwt, config),
+    accounts = createAccountService(db, delivery);
   app.disable("x-powered-by");
   if (config.NODE_ENV === "production") app.set("trust proxy", 1);
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
+          "script-src": [
+            "'self'",
+            "https://www.google.com/recaptcha/",
+            "https://www.gstatic.com/recaptcha/",
+          ],
+          "frame-src": [
+            "'self'",
+            "https://www.google.com/recaptcha/",
+            "https://recaptcha.google.com/recaptcha/",
+          ],
+          "connect-src": ["'self'", "https://www.google.com/recaptcha/"],
           "img-src": [
             "'self'",
             "data:",
@@ -62,24 +89,84 @@ export function createApp({ db, store, config, photoService }) {
     next();
   });
   app.use("/api", express.json({ limit: "64kb" }));
-  app.use(
-    "/api",
-    session({
-      name: "restaurant.csr.sid",
-      secret: config.SESSION_SECRET,
-      store,
-      genid: randomUUID,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: config.NODE_ENV === "production",
-        maxAge: 8 * 60 * 60 * 1000,
-      },
-    }),
+  // No cookies or session middleware. Explicit CORS for the configured frontend only.
+  app.use("/api", (req, res, next) => {
+    const origin = req.get("Origin");
+    if (origin && !origins.has(origin))
+      throw new AppError(
+        403,
+        "This browser address is not allowed. Use the configured app address and restart the API after changing APP_ORIGIN.",
+        "ORIGIN_DENIED",
+      );
+    if (origin) {
+      res.set("Access-Control-Allow-Origin", origin);
+      res.vary("Origin");
+    }
+    res.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    res.set(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    );
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+  app.use("/api", loadUser(jwt));
+  const authLimit = rateLimit({
+    windowMs: 900000,
+    limit: 20,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    handler: (req, res) =>
+      failure(
+        res,
+        200,
+        "RATE_LIMITED",
+        "Too many requests. Try again after 15 minutes.",
+      ),
+  });
+  app.get("/api/auth/config", (req, res) =>
+    success(res, { recaptchaSiteKey: config.RECAPTCHA_SITE_KEY || "" }),
   );
-  app.use("/api", loadUser(repo));
+  app.get("/api/auth/me", allow("admin", "chef"), (req, res) =>
+    success(res, { user: req.user }),
+  );
+  app.post("/api/auth/login", authLimit, async (req, res) =>
+    success(res, await login.login(req.body)),
+  );
+  app.post("/api/auth/otp", authLimit, async (req, res) =>
+    success(res, await login.verify(req.body)),
+  );
+  app.post("/api/auth/signup", authLimit, async (req, res) => {
+    await accounts.register(req.body);
+    success(res, {
+      message:
+        "Check your inbox for an activation link. If already registered, use resend verification.",
+    });
+  });
+  app.post("/api/auth/resend", authLimit, async (req, res) => {
+    await accounts.request(req.body, "verify");
+    success(res, {
+      message: "If eligible, a verification email has been sent.",
+    });
+  });
+  app.post("/api/auth/forgot-password", authLimit, async (req, res) => {
+    await accounts.request(req.body, "reset");
+    success(res, { message: "If eligible, a reset email has been sent." });
+  });
+  app.post("/api/auth/verify-email", authLimit, async (req, res) =>
+    success(res, await accounts.verify(req.body.token)),
+  );
+  app.post("/api/auth/reset-password", authLimit, async (req, res) => {
+    await accounts.reset(req.body);
+    success(res, { message: "Password changed. Sign in again." });
+  });
+  app.delete("/api/auth/logout", allow("admin", "chef"), (req, res) =>
+    success(res, { user: null }),
+  );
+  app.patch("/api/chefs/:id/approval", allow("admin"), async (req, res) => {
+    await accounts.decide(req.params.id, req.body.decision);
+    success(res, { id: req.params.id, approvalStatus: req.body.decision });
+  });
   app.use(
     "/api",
     createRoutes(

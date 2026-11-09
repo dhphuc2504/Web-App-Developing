@@ -116,7 +116,8 @@ restaurant-mvc/
 │   └── lib/                   Errors and server lifecycle
 ├── public/                    Styles, browser enhancements and artwork
 ├── tests/                     Isolated database and HTTP regression tests
-└── presentation/              Historical Block 5 presentation
+├── presentation/              Block 8 HTML slides and separate speaker notes
+└── archive/presentation-block5/ Historical Block 5 presentation
 ```
 
 The [route reference](docs/routes.md) describes current endpoints. [Database documentation](docs/database/README.md) lists every scalar field, SQL type, relationship, index and migration. Prisma models and migration SQL remain authoritative; the Block 5 presentation is not the current schema reference.
@@ -148,3 +149,7 @@ Create a new versioned migration for schema changes; do not modify deployed migr
 Most staff lists are limited to 100 records; ingredient ledgers show the latest 30 movements. The public menu pages published dishes. Images use controlled local paths. Uploads, suppliers, expiry batches and multiple restaurant locations remain outside this SSR application's scope.
 
 See [the documentation index](docs/README.md) for all guides and the [artwork record](public/images/japan/ASSETS.md) for asset provenance.
+
+## Presentation materials
+
+Open [the Block 8 slides](presentation/index.html) directly in a browser. [Speaker notes](presentation/speaker-notes.md) remain separate for projection. The [Block 5 archive](archive/presentation-block5/README.md) preserves the original presentation.

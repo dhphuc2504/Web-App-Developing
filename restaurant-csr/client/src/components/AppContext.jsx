@@ -50,7 +50,11 @@ export function AppProvider({ children }) {
   };
   useEffect(() => {
     bootstrap();
-    return authEvents.subscribe(() => setUser(null));
+    return authEvents.subscribe(() => {
+      setUser(null);
+      setReady(true);
+      navigate("/login", { replace: true });
+    });
   }, []);
   useEffect(() => {
     document.documentElement.classList.remove(

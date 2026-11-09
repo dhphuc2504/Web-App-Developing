@@ -1,6 +1,6 @@
-# Block 6 API reference
+# Restaurant API reference (Block 9)
 
-Base path: `/api`. Requests with JSON bodies require `Content-Type: application/json`. Responses use `application/json`. Cookie authentication is required for staff resources. Mutations require the `X-CSRF-Token` header obtained from `GET /api/session` or successful login. Logout uses DELETE without a body.
+Base path: `/api`. Requests with JSON bodies require `Content-Type: application/json`. Responses use `application/json`. Staff resources require `Authorization: Bearer <accessToken>`. No cookies or CSRF headers are used. See [authentication endpoints and limits](block9-authentication.md). Logout uses DELETE without a body.
 
 ## Response envelopes
 
@@ -16,12 +16,13 @@ Base path: `/api`. Requests with JSON bodies require `Content-Type: application/
 |---|---|
 | Success, including creation and archive | 200 |
 | Expected validation, missing record, duplicate or stock conflict | 200 |
-| Missing login or invalid credentials | 401 |
-| Forbidden role or invalid CSRF token | 403 |
+| Missing, invalid or expired access token | 401 |
+| Incorrect password or email OTP | 200 |
+| Forbidden role or dish ownership | 403 |
 | Unknown API endpoint | 404 |
 | Unexpected server/database failure | 500 |
 
-Do not branch on messages. Current codes include `VALIDATION_ERROR`, `NOT_FOUND`, `DUPLICATE_VALUE`, `INVALID_REFERENCE`, `INVALID_CATEGORY`, `EMPTY_PATCH`, `CONFLICT`, `UNIT_LOCKED`, `INSUFFICIENT_STOCK`, `RECIPE_VERSION_CONFLICT`, `REQUEST_KEY_CONFLICT`, `INVALID_REQUEST`, `CONTENT_TYPE_REQUIRED`, `INVALID_JSON`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `INVALID_CREDENTIALS`, `UNAUTHENTICATED`, `FORBIDDEN`, `CSRF_INVALID`, `ENDPOINT_NOT_FOUND`, and `INTERNAL_ERROR`.
+Do not branch on messages. Current codes include `VALIDATION_ERROR`, `NOT_FOUND`, `DUPLICATE_VALUE`, `INVALID_REFERENCE`, `INVALID_CATEGORY`, `EMPTY_PATCH`, `CONFLICT`, `UNIT_LOCKED`, `INSUFFICIENT_STOCK`, `RECIPE_VERSION_CONFLICT`, `REQUEST_KEY_CONFLICT`, `INVALID_REQUEST`, `CONTENT_TYPE_REQUIRED`, `INVALID_JSON`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `INVALID_CREDENTIALS`, `UNAUTHENTICATED`, `FORBIDDEN`, `INVALID_TOKEN`, `DISH_ACCESS_DENIED`, `ENDPOINT_NOT_FOUND`, and `INTERNAL_ERROR`.
 
 Frontend-only errors identify transport or protocol problems: `NETWORK_ERROR`, `TIMEOUT`, `CANCELLED`, `INVALID_RESPONSE`, `HTTP_ERROR`. These are constructed by the shared client, not HTTP API business responses.
 
@@ -29,17 +30,19 @@ Frontend-only errors identify transport or protocol problems: `NETWORK_ERROR`, `
 
 | Method | URL | Access | Result |
 |---|---|---|---|
-| GET | `/session` | Public | `{user, csrfToken}` |
-| POST | `/session` | Public + CSRF | Login using `{email,password}`; rotated session and CSRF token |
-| DELETE | `/session` | Staff | `{user:null}` after session destruction |
+| GET | `/auth/me` | Staff | Identity from verified JWT; zero database queries |
+| POST | `/auth/login` | Public | Password check → email OTP challenge |
+| POST | `/auth/otp` | Public, challenge + code | Access JWT and safe identity |
+| DELETE | `/auth/logout` | Staff | `{user:null}`; browser discards JWT |
 | GET | `/menu` | Public | `{items,categories,total,page,pageCount}` |
 | GET | `/menu/:slug` | Public | Published dish in an active category |
-| GET | `/dishes` or `/dishes/:id` | Staff | Dish collection or record |
+| GET | `/dishes` or `/dishes/:id` | Public | Published dishes only; public fields |
+| GET | `/staff/dishes` or `/staff/dishes/:id` | Staff | Full staff list or record |
 | POST | `/dishes` | Staff | Created dish |
-| PATCH | `/dishes/:id` | Staff | Updated dish; only submitted writable fields change |
-| DELETE | `/dishes/:id` | Staff | Archived dish |
+| PATCH | `/dishes/:id` | Assigned chef or admin | Updated dish; only submitted writable fields change |
+| DELETE | `/dishes/:id` | Admin | Archived dish |
 | GET | `/dishes/:id/recipe` | Staff | `{dish,recipe,ingredients}` |
-| PUT | `/dishes/:id/recipe` | Staff | Saved recipe with items and incremented version |
+| PUT | `/dishes/:id/recipe` | Assigned chef or admin | Saved recipe with items and incremented version |
 | GET | `/ingredients` or `/ingredients/:id` | Staff | Ingredient collection or record |
 | POST / PATCH / DELETE | `/ingredients` / `/ingredients/:id` | Admin | Created, updated or archived ingredient |
 | GET | `/ingredients/:id/movements` | Staff | `{ingredient,movements}` |
@@ -49,6 +52,7 @@ Frontend-only errors identify transport or protocol problems: `NETWORK_ERROR`, `
 | POST | `/chefs` | Admin | Created chef from `{displayName,email,password}` |
 | PATCH | `/chefs/:id` | Admin | Only `displayName` and `isActive` may change |
 | DELETE | `/chefs/:id` | Admin | Chef with `isActive:false` |
+| DELETE | `/chefs/:id/account` | Admin | Permanent deletion with `{email}` confirmation; rejects accounts referenced by recipe edits or stock journals |
 | GET | `/stock-operations` | Staff | Latest 100 journal operations |
 | POST | `/stock-operations` | Staff; receipt/correction admin-only | Recorded operation with movements and actor name |
 
@@ -56,7 +60,7 @@ Menu query parameters: `page` (positive integer), `sort` (`recommended`, `name`,
 
 ## Writable fields
 
-- Dish: `name`, `slug`, `categoryId`, `description`, `priceMinor`, `imagePath`, `imageAlt`, `displayOrder`, `isFeatured`, `isPublished`, `isAvailable`.
+- Dish: `name`, `slug`, `categoryId`, `description`, `priceMinor`, `preparationSummary`, `chefId` (admin only), `imagePath`, `imageAlt`, `displayOrder`, `isFeatured`, `isPublished`, `isAvailable`.
 - Ingredient: `name`, `description`, `baseUnit` (`g`, `ml`, `piece`), `lowStockThreshold`, `isActive`. Balance changes must use stock operations.
 - Category: `name`, `slug`, `description`, `displayOrder`, `isActive`.
 - Recipe: `version`, `instructions`, `preparationMinutes`, `cookingMinutes`, `items` containing `ingredientId`, `quantity`, `notes`.
@@ -89,7 +93,7 @@ Recipe preparation:
 }
 ```
 
-The example ID strings are placeholders; actual requests require UUIDs. Manual ingredient lines and recipe-based usage are mutually exclusive. The actor is taken from the session, never from the request body. Usage/waste accept positive quantities and subtract them. Corrections accept signed deltas. Reusing the same request key with identical inputs returns the same operation; different inputs with that key return `REQUEST_KEY_CONFLICT`.
+The example ID strings are placeholders; actual requests require UUIDs. Manual ingredient lines and recipe-based usage are mutually exclusive. The actor is taken from verified JWT claims, never from the request body. Usage/waste accept positive quantities and subtract them. Corrections accept signed deltas. Reusing the same request key with identical inputs returns the same operation; different inputs with that key return `REQUEST_KEY_CONFLICT`.
 
 ## Client architecture
 
@@ -103,9 +107,9 @@ Public preparation copy is stored in `Dish.preparationSummary` (`preparation_sum
 
 ### Dish photo uploads
 
-`POST /api/dish-photos` accepts one `photo` file using `multipart/form-data`, with a chef/admin session and CSRF header. Unlike the JSON endpoints, the browser sets its multipart Content-Type boundary. Success returns `{ok:true,data:{imagePath}}`; use that URL in the subsequent dish POST/PATCH. See [photo limits and Storage setup](photo-uploads.md).
+`POST /api/dish-photos` accepts one `photo` file using `multipart/form-data`, with a chef/admin Bearer JWT. Unlike the JSON endpoints, the browser sets its multipart Content-Type boundary. Success returns `{ok:true,data:{imagePath}}`; use that URL in the subsequent dish POST/PATCH. See [photo limits and Storage setup](photo-uploads.md).
 
-For new dishes, `slug` is optional and generated uniquely from `name` when omitted. Renaming a dish without supplying `slug` keeps its URL. Existing explicit-slug API clients remain supported. `isPublished:false` saves a draft; `true` publishes it. The UI makes these separate save actions. `preparationSummary` is also writable.
+For new dishes, `slug` is optional and generated uniquely from `name` when omitted. Renaming a dish without supplying `slug` keeps its URL. Existing explicit-slug API clients remain supported. Only admins can set `isPublished` or `chefId`; chefs create drafts assigned to themselves. The UI makes these separate save actions. `preparationSummary` is also writable.
 
 ## Block 7 pagination update
 

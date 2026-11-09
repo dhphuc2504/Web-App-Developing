@@ -1,0 +1,1106 @@
+#root,
+.application {
+  min-height: 100vh;
+}
+.loading-indicator {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #baa47b;
+  background: #27271f;
+  color: #f3e9d3;
+  padding: 15px 23px;
+  box-shadow: 0 8px 28px #0005;
+  border-radius: 6px;
+}
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #bcae9055;
+  border-top-color: #e4c994;
+  border-radius: 50%;
+  animation: spinner 1s linear infinite;
+}
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.application[inert] {
+  cursor: progress;
+}
+.login-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  max-width: 1000px;
+  margin: 70px auto;
+}
+.login-layout h1 {
+  font-size: 70px;
+}
+.login-form {
+  display: block;
+}
+.login-form label {
+  margin-bottom: 22px;
+}
+.category-tabs button {
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 8px;
+  font-size: 12px;
+}
+.category-tabs button[aria-pressed="true"] {
+  border-bottom: 1px solid #8d5a36;
+}
+.menu-entry .text-button {
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+.book-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+}
+.book-pagination button {
+  font-size: 12px;
+}
+.book-pagination > span {
+  position: relative;
+}
+.menu-loading {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+}
+.page-dining .application[inert] .menu-entry button:disabled {
+  opacity: 1;
+}
+.page-dining .application:has(.menu-loading) ~ .loading-indicator {
+  display: none;
+}
+.paper-route {
+  animation: paper-arrive 0.4s ease-out;
+}
+@keyframes paper-arrive {
+  from {
+    transform: translateY(35px) rotate(-2deg);
+    opacity: 0.3;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.stock-panel {
+  max-width: 700px;
+  margin: 20px auto;
+}
+.stock-panel form > label,
+.staff-card form > label {
+  display: block;
+  margin: 15px 0;
+}
+.staff-card .check-label {
+  display: flex;
+}
+.staff-card form {
+  margin: 16px 0;
+}
+.staff-grid {
+  margin-bottom: 35px;
+}
+.error p {
+  font-size: 12px;
+  margin-top: 5px;
+}
+.recipe-panel td small {
+  display: block;
+}
+.recipe-panel input {
+  max-width: 180px;
+}
+.site-footer {
+  padding: 30px 5vw;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.page-admin .content-main {
+  padding-top: 48px;
+}
+.scene-main {
+  min-height: 100vh;
+}
+.book-turn-face > .book-page {
+  height: 100%;
+  width: 100%;
+}
+.book-turn-face {
+  padding: 0 !important;
+}
+.book-turn-sheet .book-page {
+  position: relative;
+}
+.book-turn-sheet .text-button {
+  pointer-events: none;
+}
+.login-form input {
+  width: 100%;
+}
+.dish-dialog > a {
+  display: inline-block;
+  margin-top: 15px;
+}
+@media (max-width: 700px) {
+  .login-layout {
+    display: block;
+    margin-top: 50px;
+  }
+  .login-layout h1 {
+    font-size: 46px;
+  }
+  .login-form {
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .site-footer {
+    flex-direction: column;
+    font-size: 12px;
+  }
+  .book-pagination button {
+    font-size: 10px;
+    padding: 8px;
+  }
+  .loading-indicator {
+    right: 12px;
+    bottom: 12px;
+  }
+  .recipe-layout {
+    display: block;
+  }
+  .recipe-panel {
+    padding: 20px;
+  }
+  .stock-panel {
+    padding: 24px;
+  }
+  .site-header nav {
+    gap: 10px;
+  }
+  .site-header nav > a {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-route {
+    animation: none;
+  }
+  .spinner {
+    animation: none;
+  }
+}
+
+fieldset.application {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Office shortcuts share the numbered layout with the original house design. */
+.page-admin .office-links {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: #f7f3e9;
+}
+.page-admin .office-links a {
+  min-width: 0;
+}
+.page-admin .office-links strong {
+  overflow-wrap: anywhere;
+}
+.page-admin .staff-card {
+  min-width: 0;
+}
+.page-admin .staff-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+.page-admin .staff-card h3 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1000px) {
+  .page-admin .office-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .page-admin .office-links {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chef-card-summary {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.chef-card-summary:hover {
+  background: transparent;
+  color: var(--ink);
+}
+.chef-card-summary:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 8px;
+}
+.chef-card-summary > small {
+  display: block;
+  margin-top: 18px;
+  color: var(--soft);
+}
+.chef-card-editor {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.new-chef-panel form > button {
+  margin-right: 12px;
+}
+
+.recipe-sheet-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(880px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 32px;
+  border: 1px solid #b49d77;
+  border-radius: 3px;
+  color: #352e22;
+  background: #f6efdc;
+  box-shadow: 0 24px 80px #0008;
+  transform-origin: center;
+  animation: sheet-lift 500ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+}
+.recipe-sheet-dialog::backdrop {
+  background: #17160f88;
+}
+.recipe-sheet-dialog .editor-panel {
+  padding: 20px 0 0;
+  border: 0;
+  background: transparent;
+  animation: none;
+  gap: 24px;
+}
+.recipe-sheet-dialog .dialog-close {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+}
+.recipe-sheet-dialog.sheet-returning {
+  animation: sheet-return 450ms ease-in both;
+  pointer-events: none;
+}
+.ticket-lifted {
+  opacity: 0.45;
+}
+@keyframes sheet-lift {
+  from {
+    opacity: 0;
+    transform: translate(var(--ticket-x), var(--ticket-y)) scale(0.35)
+      rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0);
+  }
+}
+@keyframes sheet-return {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--ticket-x), var(--ticket-y)) scale(0.35)
+      rotate(-6deg);
+  }
+}
+.stock-panel select,
+.recipe-sheet-dialog select,
+.editor-panel select,
+.page-dining .sort-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%236b563c' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+}
+.page-dining .sort-form select {
+  width: auto;
+  min-width: 190px;
+  max-width: 100%;
+}
+@media (max-width: 700px) {
+  .recipe-sheet-dialog {
+    padding: 28px 18px 18px;
+  }
+  .recipe-sheet-dialog .editor-panel {
+    display: block;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recipe-sheet-dialog,
+  .recipe-sheet-dialog.sheet-returning {
+    animation: none;
+  }
+}
+
+.dish-story {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  background: #f7f0df;
+  color: #382c20;
+  border: 8px solid #493226;
+  box-shadow: 0 20px 55px #0005;
+}
+.dish-story-photo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 42px;
+  background: radial-gradient(ellipse, #ede0c6, #d8c6a5);
+  border-right: 1px solid #bca989;
+}
+.dish-story-photo .food-image {
+  width: min(100%, 340px);
+  height: auto;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 16px 28px #60462933;
+}
+.dish-story-seal {
+  color: #a44832;
+  font-size: 32px;
+  border: 1px solid currentColor;
+  padding: 5px 12px;
+}
+.dish-story-copy {
+  padding: 40px;
+  min-width: 0;
+}
+.dish-story-description {
+  font:
+    24px/1.5 Georgia,
+    serif;
+  margin: 18px 0;
+}
+.dish-story-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #ccbda2;
+  padding-bottom: 24px;
+}
+.dish-story-meta > strong {
+  font:
+    28px Georgia,
+    serif;
+}
+.dish-story-copy section {
+  margin: 26px 0;
+}
+.dish-story-copy h2 {
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+.dish-story-copy section p {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.dish-time {
+  background: #e9dfca;
+  padding: 16px;
+}
+.dish-time small {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.dish-ingredient-tags {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dish-ingredient-tags li {
+  border: 1px solid #c5b494;
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+.dish-related {
+  margin: 45px 0;
+  padding: 28px;
+  background: #f7f0df;
+  color: #382c20;
+}
+.dish-related h2 {
+  margin: 10px 0 24px;
+  font-size: 30px;
+}
+.dish-related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.dish-related-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #ccbda2;
+  padding: 18px;
+  min-width: 0;
+}
+.dish-related-card:hover {
+  background: #e9dfca;
+}
+.dish-related-card .food-image {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.dish-related-card h3 {
+  font-size: 20px;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.dish-related-card small {
+  display: block;
+  font-size: 10px;
+  margin: 8px 0;
+}
+@media (max-width: 1000px) {
+  .dish-related-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .dish-story {
+    grid-template-columns: 1fr;
+    border-width: 5px;
+  }
+  .dish-story-photo {
+    padding: 24px;
+    border-right: 0;
+    border-bottom: 1px solid #bca989;
+  }
+  .dish-story-photo .food-image {
+    width: 220px;
+  }
+  .dish-story-copy {
+    padding: 24px;
+  }
+  .dish-related {
+    padding: 20px;
+  }
+}
+.page-dining .dish-story .eyebrow,
+.page-dining .dish-related .eyebrow {
+  color: #8b4b36;
+}
+
+.dish-form-section {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #cbbda4;
+}
+.dish-form-section h3 {
+  font-size: 23px;
+  margin: 0 0 15px;
+}
+.dish-form-section > p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #6d604b;
+  margin: 10px 0 16px;
+}
+.dish-photo-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  background: #e8dfca;
+  border: 1px dashed #a89573;
+  padding: 18px;
+  margin: 15px 0;
+  border-radius: 4px;
+}
+.dish-photo-preview img {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+.dish-photo-preview .food-image {
+  width: 210px;
+  height: 210px;
+  max-width: 100%;
+}
+input.photo-file-input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  padding: 0 !important;
+  opacity: 0;
+  overflow: hidden;
+}
+.photo-filename {
+  overflow-wrap: anywhere;
+}
+.dish-optional {
+  margin: 20px 0;
+  border: 1px solid #cbbda4;
+  padding: 16px;
+}
+.dish-optional summary {
+  cursor: pointer;
+  font-size: 13px;
+}
+.dish-optional[open] summary {
+  margin-bottom: 18px;
+}
+.dish-save-actions {
+  flex-wrap: wrap;
+}
+.friendly-dish-editor .form-intro .status-tag {
+  font-size: 10px;
+}
+
+.friendly-dish-editor button.secondary {
+  color: #514431;
+  border-color: #ab9879;
+}
+.friendly-dish-editor button.secondary:hover {
+  background: #e8dfcf;
+}
+.friendly-dish-editor .text-button {
+  color: #70573b;
+}
+
+.dish-query-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: end;
+  background: #f5efdf;
+  color: #26382e;
+  padding: 20px;
+  border: 1px solid #bba987;
+  margin: 20px 0;
+}
+.dish-query-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+}
+.dish-query-controls input,
+.dish-query-controls select {
+  color: #26382e;
+  background-color: #fffaf0;
+  min-width: 120px;
+  max-width: 230px;
+}
+.dish-query-controls form,
+.dish-pagination form {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.dish-pagination {
+  background: #f5efdf;
+  color: #26382e;
+  padding: 20px;
+  margin: 22px 0;
+}
+.dish-pagination input {
+  width: 90px;
+  color: #26382e;
+}
+.dish-pagination .button-row {
+  justify-content: center;
+}
+.dish-pagination p {
+  text-align: center;
+}
+.scroll-sentinel {
+  height: 2px;
+}
+.ticket-actions[hidden] {
+  display: none;
+}
+@media (max-width: 650px) {
+  .dish-query-controls label,
+  .dish-query-controls form {
+    width: 100%;
+  }
+  .dish-query-controls input,
+  .dish-query-controls select {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+.appended-spread + .appended-spread {
+  border-top: 8px solid #826346;
+  margin-top: 22px;
+}
+.board-toolbar {
+  flex-wrap: wrap;
+}
+.board-toolbar .dish-query-controls {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.board-toolbar > .button {
+  white-space: nowrap;
+}
+.dish-query-controls legend {
+  background: #f5efdf;
+  padding: 2px 10px;
+  color: #26382e;
+}
+.dish-query-controls select {
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23514431' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.menu-book,
+.ticket-stack {
+  overflow-anchor: none;
+}
+
+/* Fold advanced filters into the menu paper. */
+.dish-query-controls {
+  display: block;
+  min-width: 0;
+}
+.dish-search-row {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.dish-search-row > form {
+  flex: 1 1 320px;
+}
+.dish-search-row > form label {
+  flex: 1;
+  min-width: 180px;
+}
+.dish-search-row input {
+  width: 100%;
+  max-width: none;
+}
+.dish-query-controls button,
+.dish-pagination button {
+  background: #30483b;
+  color: #fff7e6;
+  border: 1px solid #30483b;
+}
+.dish-query-controls .advanced-search-toggle,
+.dish-filter-actions button[type="button"] {
+  background: transparent;
+  color: #30483b;
+  border-color: #9a8969;
+}
+.dish-advanced-panel {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #c7b794;
+}
+.dish-advanced-panel[hidden] {
+  display: none;
+}
+.dish-advanced-panel:not([hidden]) {
+  animation: unfold-filters 180ms ease-out;
+}
+.dish-advanced-panel form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+}
+.dish-advanced-panel input,
+.dish-advanced-panel select {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+.dish-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dish-filter-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.dish-filter-summary > span {
+  margin-right: 8px;
+}
+.dish-filter-summary .dish-filter-chip {
+  padding: 5px 10px;
+  background: #e8deca;
+  color: #30483b;
+  border: 1px solid #c7b794;
+  font-size: 12px;
+}
+.dish-pagination-settings {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.dish-pagination-settings legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.dish-pagination-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+}
+.dish-pagination-settings select {
+  color: #26382e;
+  background-color: #fffaf0;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23514431' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.dish-query-controls button:focus-visible,
+.dish-pagination button:focus-visible {
+  outline: 3px solid #a75e39;
+  outline-offset: 3px;
+}
+@keyframes unfold-filters {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dish-advanced-panel:not([hidden]) {
+    animation: none;
+  }
+}
+@media (max-width: 650px) {
+  .dish-search-row > form {
+    flex-basis: 100%;
+  }
+  .dish-search-row > label,
+  .advanced-search-toggle {
+    width: 100%;
+  }
+  .dish-advanced-panel form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dish-pagination-settings label {
+    flex: 1 1 160px;
+  }
+  .dish-pagination-settings select {
+    width: 100%;
+  }
+}
+.dish-query-controls input,
+.dish-query-controls select,
+.dish-pagination-settings select {
+  margin-bottom: 0;
+}
+.dish-query-controls label,
+.dish-pagination-settings label {
+  margin: 0;
+}
+
+/* Keep page navigation controls on one baseline, including the labelled input. */
+.dish-pagination .button-row,
+.dish-pagination .button-row form {
+  align-items: flex-end;
+  gap: 12px;
+}
+.dish-pagination .button-row form {
+  flex-wrap: nowrap;
+  margin: 0;
+}
+.dish-pagination .button-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+.dish-pagination .button-row input,
+.dish-pagination .button-row button {
+  box-sizing: border-box;
+  height: 48px;
+  margin: 0;
+}
+.dish-pagination .button-row input {
+  padding-block: 0;
+}
+.dish-pagination .button-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 0;
+}
+
+/* Browsing controls remain reachable while more dishes arrive. */
+.dish-pagination-settings {
+  align-items: flex-end;
+  padding: 14px 20px;
+  margin-top: 18px;
+  background: #f5efdf;
+  color: #26382e;
+  border: 1px solid #bba987;
+  width: 100%;
+}
+.dish-pagination-settings button {
+  background: #30483b;
+  color: #fff7e6;
+}
+.dish-pagination-settings > span {
+  font-size: 12px;
+  align-self: center;
+}
+/* Compact shared toolbar: controls in one row, count below. */
+.pagination-toolbar {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 24px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 8px 12px;
+  margin: 0;
+  border: 1px solid #bba987;
+  border-radius: 4px;
+  box-shadow: 0 4px 18px #0004;
+  text-align: center;
+}
+.pagination-toolbar .dish-pagination-settings {
+  width: auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.pagination-toolbar .dish-pagination-settings label,
+.pagination-toolbar .button-row label {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin: 0;
+}
+.pagination-toolbar .dish-pagination-settings select,
+.pagination-toolbar .button-row input,
+.pagination-toolbar .button-row button,
+.pagination-toolbar button {
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.pagination-toolbar .dish-pagination-settings select {
+  width: auto;
+  padding-right: 30px;
+}
+.pagination-toolbar .button-row input {
+  width: 58px;
+}
+.pagination-toolbar .button-row,
+.pagination-toolbar .button-row form {
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+}
+.pagination-toolbar .pagination-summary {
+  order: 5;
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.pagination-toolbar > p {
+  margin: 0;
+  font-size: 11px;
+}
+body:has(.pagination-toolbar) {
+  padding-bottom: 140px;
+}
+@media (max-width: 650px) {
+  .pagination-toolbar {
+    gap: 6px;
+    padding: 8px;
+    max-width: calc(100% - 16px);
+  }
+  .pagination-toolbar .dish-pagination-settings {
+    gap: 6px;
+  }
+  .pagination-toolbar .dish-pagination-settings label {
+    flex: 0 1 auto;
+  }
+  .pagination-toolbar .dish-pagination-settings label,
+  .pagination-toolbar .button-row label {
+    font-size: 10px;
+  }
+  .pagination-toolbar .button-row {
+    flex-wrap: wrap;
+  }
+  .pagination-toolbar button {
+    padding-inline: 8px;
+  }
+  body:has(.pagination-toolbar) {
+    padding-bottom: 180px;
+  }
+}
+
+/* Auth requests disable their form, not navigation or the whole restaurant. */
+.auth-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+/* Account forms are single-column cards, not the two-column catalog editor. */
+.login-layout {
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  align-items: start;
+  gap: clamp(28px, 5vw, 64px);
+  max-width: 1040px;
+  margin: clamp(28px, 5vw, 64px) auto;
+}
+.login-layout > div { min-width: 0; padding-top: 28px; }
+.login-layout h1 { font-size: clamp(38px, 4.5vw, 58px); line-height: 1.08; margin: 16px 0 22px; text-wrap: balance; }
+.login-layout > div > p:not(.eyebrow) { max-width: 34ch; font-size: 15px; line-height: 1.75; color: var(--soft); }
+.login-layout .auth-card {
+  display: block;
+  min-width: 0;
+  padding: clamp(24px, 3vw, 38px);
+  border-top: 3px solid #a56d4e;
+  background: #faf7ee;
+  box-shadow: 0 12px 35px #30291d08;
+}
+.auth-card .auth-fields { display: block; width: 100%; min-inline-size: 0; }
+.auth-card label { width: 100%; margin: 0 0 22px; font-size: 13px; line-height: 1.5; }
+.auth-card label input { min-width: 0; width: 100%; min-height: 46px; padding: 12px 14px; font-size: 15px; }
+.auth-card .auth-fields > button { width: 100%; min-height: 48px; margin-top: 16px; }
+.auth-card .auth-fields > button + button { margin-top: 10px; }
+.auth-card p { font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.auth-card .error { margin-bottom: 20px; }
+.auth-card-footer, .login-form > p:last-child { margin: 24px 0 0; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; }
+.auth-card-footer a, .login-form > p:last-child a { color: #925039; text-underline-offset: 4px; }
+.auth-card-footer a:hover, .login-form > p:last-child a:hover { text-decoration: underline; }
+.auth-captcha { margin: 6px 0 0; padding-top: 4px; }
+.auth-captcha > p { margin: 10px 0 0; color: var(--soft); }
+.auth-card button:disabled { cursor: not-allowed; }
+.auth-card [aria-busy="true"] button:disabled { cursor: wait; }
+@media (max-width: 760px) {
+ .login-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; max-width: 520px; margin: 24px auto 40px; }
+ .login-layout > div { padding-top: 0; }
+ .login-layout h1 { font-size: 40px; margin-bottom: 14px; }
+ .login-layout .auth-card { margin-top: 0; padding: 24px; }
+}
+@media (max-width: 420px) {
+ .login-layout h1 { font-size: 34px; }
+ .login-layout .auth-card { padding: 20px; }
+}
+
+.staff-grid { align-items: start; }
+.chef-profile-dialog { width: min(620px, calc(100vw - 32px)); max-height: 88dvh; overflow-y: auto; padding: 34px; border: 1px solid #b9a98d; border-top: 4px solid #a56d4e; border-radius: 5px; background: #faf7ee; color: var(--ink); box-shadow: 0 24px 80px #0005; }
+.chef-profile-dialog::backdrop { background: #111a15aa; backdrop-filter: blur(3px); }
+.chef-profile-heading { padding-right: 30px; }
+.chef-profile-heading h2 { font-size: 32px; margin: 12px 0 8px; overflow-wrap: anywhere; }
+.chef-profile-heading > p:last-child { color: var(--soft); font-size: 14px; overflow-wrap: anywhere; }
+.chef-profile-status { display: flex; flex-wrap: wrap; gap: 14px 30px; padding: 20px 0; font-size: 12px; color: var(--soft); }
+.chef-profile-status strong { display: block; color: var(--ink); text-transform: capitalize; margin-top: 4px; font-size: 14px; }
+.chef-profile-section { padding: 24px 0; border-top: 1px solid var(--line); }
+.chef-profile-dialog h3 { font-size: 21px; margin: 0 0 18px; }
+.chef-profile-dialog label { font-size: 13px; }
+.chef-profile-dialog input:not([type=checkbox]) { min-height: 44px; font-size: 15px; }
+.chef-profile-dialog p { font-size: 13px; line-height: 1.65; }
+.chef-profile-dialog .muted-copy { color: var(--soft); margin: 10px 0 18px; }
+.chef-profile-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.chef-profile-actions button { margin: 0; padding: 12px 20px; min-height: 44px; }
+.chef-delete-section { padding: 22px; border: 1px solid #a65c4438; background: #a65c4407; border-radius: 3px; }
+.chef-delete-section h3 { color: #8a4132; }
+.chef-delete-section p { color: var(--soft); margin-bottom: 14px; }
+.chef-delete-section form { margin-top: 20px; }
+.chef-delete-section .destructive-button { background: #883f31; border-color: #883f31; color: #fff8ed; }
+@media(max-width: 560px) { .chef-profile-dialog { padding: 24px 20px; } .chef-profile-actions > button { flex: 1 1 140px; } .chef-delete-section { padding: 18px 14px; } }

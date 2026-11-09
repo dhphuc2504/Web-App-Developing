@@ -1,3 +1,4 @@
+import { tokenStore } from "../client/src/api/token.js";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createApiClient } from "../client/src/api/client.js";
@@ -6,7 +7,8 @@ const response = (body, status = 200, type = "application/json") =>
     status,
     headers: { "Content-Type": type },
   });
-test("client centralizes URL, JSON headers, CSRF and credentials", async () => {
+test("client centralizes Bearer JWT and omits cookies", async () => {
+  tokenStore.set("test-jwt");
   const calls = [],
     changes = [];
   const client = createApiClient({
@@ -15,9 +17,7 @@ test("client centralizes URL, JSON headers, CSRF and credentials", async () => {
       calls.push({ url, options });
       return response({
         ok: true,
-        data: url.endsWith("/session")
-          ? { csrfToken: "token" }
-          : { id: "saved" },
+        data: { id: "saved" },
       });
     },
   });
@@ -26,10 +26,10 @@ test("client centralizes URL, JSON headers, CSRF and credentials", async () => {
     body: { name: "Rice" },
   });
   assert.equal(saved.id, "saved");
-  assert.equal(calls[1].url, "/api/dishes");
-  assert.equal(calls[1].options.headers["Content-Type"], "application/json");
-  assert.equal(calls[1].options.headers["X-CSRF-Token"], "token");
-  assert.equal(calls[1].options.credentials, "same-origin");
+  assert.equal(calls[0].url, "/api/dishes");
+  assert.equal(calls[0].options.headers["Content-Type"], "application/json");
+  assert.equal(calls[0].options.headers["Authorization"], "Bearer test-jwt");
+  assert.equal(calls[0].options.credentials, "omit");
   assert.equal(
     changes.reduce((a, b) => a + b, 0),
     0,
@@ -113,12 +113,11 @@ test("401 notifies auth state and cancellation is distinguishable", async () => 
     { code: "CANCELLED" },
   );
 });
-test("photo multipart keeps browser boundary and shared CSRF handling", async () => {
+test("photo multipart keeps browser boundary and shared Bearer handling", async () => {
+  tokenStore.set("test-jwt");
   let sent;
   const client = createApiClient({
     fetchImpl: async (url, options) => {
-      if (url.endsWith("/session"))
-        return response({ ok: true, data: { csrfToken: "token" } });
       sent = options;
       return response({ ok: true, data: { imagePath: "/images/photo.webp" } });
     },
@@ -128,15 +127,14 @@ test("photo multipart keeps browser boundary and shared CSRF handling", async ()
   await client.request("/dish-photos", { method: "POST", body });
   assert.equal(sent.body, body);
   assert.equal(sent.headers["Content-Type"], undefined);
-  assert.equal(sent.headers["X-CSRF-Token"], "token");
+  assert.equal(sent.headers["Authorization"], "Bearer test-jwt");
 });
 
 test("background browsing leaves global controls available, but mutations still block", async () => {
   const changes = [];
   const client = createApiClient({
     onPending: (n) => changes.push(n),
-    fetchImpl: async () =>
-      response({ ok: true, data: { csrfToken: "test-token" } }),
+    fetchImpl: async () => response({ ok: true, data: { id: "test-record" } }),
   });
   await client.request("/menu?q=temupra", { background: true });
   assert.deepEqual(changes, []);

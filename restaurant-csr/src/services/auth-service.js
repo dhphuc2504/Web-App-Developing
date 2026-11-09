@@ -1,27 +1,8 @@
 import argon2 from "argon2";
-import { loginInput, staffInput } from "../validators/input.js";
+import { staffInput } from "../validators/input.js";
 import { AppError } from "../lib/errors.js";
 export function createAuthService(repo) {
   return {
-    async login(body) {
-      const input = loginInput.parse(body),
-        user = await repo.staff.byEmail(input.email);
-      if (
-        !user ||
-        !user.isActive ||
-        !(await argon2.verify(user.passwordHash, input.password))
-      )
-        throw new AppError(
-          401,
-          "Invalid email or password.",
-          "INVALID_CREDENTIALS",
-        );
-      await repo.db.staffUser.update({
-        where: { id: user.id },
-        data: { lastLoginAt: new Date() },
-      });
-      return user;
-    },
     async createInitialAdmin(body) {
       const data = staffInput.parse(body);
       const passwordHash = await argon2.hash(data.password, {
@@ -37,6 +18,8 @@ export function createAuthService(repo) {
             displayName: data.displayName,
             passwordHash,
             role: "admin",
+            emailVerifiedAt: new Date(),
+            approvalStatus: "approved",
           },
         });
       });
@@ -51,6 +34,7 @@ export function createAuthService(repo) {
             type: argon2.argon2id,
           }),
           role: "chef",
+          approvalStatus: "approved",
         },
       });
     },

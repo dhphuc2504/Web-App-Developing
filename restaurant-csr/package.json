@@ -1,7 +1,7 @@
 {
   "name": "restaurant-csr",
   "version": "1.0.0",
-  "description": "Block 6: React CSR restaurant with an Express REST API and Prisma",
+  "description": "Blocks 6–9: React restaurant with JWT, email OTP and role/ownership authorization",
   "main": "src/server.js",
   "scripts": {
     "dev": "concurrently -k -n api,web \"node --watch src/server.js\" \"vite --host 127.0.0.1\"",
@@ -18,7 +18,8 @@
     "db:migrate:summary": "node scripts/migrate-public-summary.js",
     "demo:seed:dishes": "node scripts/seed-pagination-dishes.js",
     "db:migrate:search": "node scripts/migrate-dish-search.js",
-    "db:check:search": "node scripts/check-dish-search.js"
+    "db:check:search": "node scripts/check-dish-search.js",
+    "db:migrate:auth": "node scripts/migrate-auth.js"
   },
   "keywords": [],
   "author": "",
@@ -34,9 +35,10 @@
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
-    "express-session": "^1.19.0",
     "helmet": "^8.3.0",
+    "jose": "^6.2.16",
     "multer": "^2.4.0",
+    "nodemailer": "^10.4.0",
     "pg": "^8.23.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

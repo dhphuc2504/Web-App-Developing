@@ -272,6 +272,8 @@ export function Recipe() {
   );
 }
 function RecipeFields({ data, reload }) {
+  const { user } = useApp();
+  const writable = user.role === "admin" || data.dish.chefId === user.id;
   const { dish, recipe } = data,
     ingredients = [
       ...new Map(
@@ -320,108 +322,122 @@ function RecipeFields({ data, reload }) {
                 reload();
             }}
           >
-            <Field
-              name="instructions"
-              label="Preparation notes"
-              type="textarea"
-              value={values.instructions}
-              onChange={(value) =>
-                setValues((v) => ({ ...v, instructions: value }))
-              }
-            />
-            <div className="minute-fields">
-              {[
-                ["preparationMinutes", "Preparation · minutes"],
-                ["cookingMinutes", "Cooking · minutes"],
-              ].map(([key, label]) => (
-                <Field
-                  key={key}
-                  name={key}
-                  label={label}
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={values[key]}
-                  onChange={(value) =>
-                    setValues((v) => ({ ...v, [key]: value }))
-                  }
-                />
-              ))}
-            </div>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Ingredient</th>
-                    <th>Per serving</th>
-                    <th>Note</th>
-                    <th>Include</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {values.items.map((item, index) => {
-                    const ingredient = ingredients.find(
-                        (i) => i.id === item.ingredientId,
-                      ),
-                      setItem = (patch) =>
-                        setValues((v) => ({
-                          ...v,
-                          items: v.items.map((row, i) =>
-                            i === index ? { ...row, ...patch } : row,
-                          ),
-                        }));
-                    return (
-                      <tr key={item.ingredientId}>
-                        <td>
-                          {ingredient.name}
-                          <small>
-                            {ingredient.baseUnit} · {ingredient.quantityOnHand}{" "}
-                            on shelf{!ingredient.isActive ? " · inactive" : ""}
-                          </small>
-                        </td>
-                        <td>
-                          <input
-                            aria-label={"Quantity for " + ingredient.name}
-                            type="number"
-                            min="0"
-                            step="0.001"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              setItem({ quantity: e.target.value })
-                            }
-                          />
-                        </td>
-                        <td>
-                          <input
-                            aria-label={"Notes for " + ingredient.name}
-                            value={item.notes}
-                            onChange={(e) => setItem({ notes: e.target.value })}
-                          />
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() =>
-                              setItem({
-                                quantity: Number(item.quantity) > 0 ? "0" : "1",
-                              })
-                            }
-                          >
-                            {Number(item.quantity) > 0 ? "Remove" : "Add"}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <p>
-              Blank or zero excludes an ingredient. Saving a recipe does not
-              deduct stock.
-            </p>
-            <button disabled={mutation.saving}>Save recipe ↗</button>
+            {!writable && (
+              <p>
+                This recipe is read-only. Only its assigned chef or an
+                administrator can edit it.
+              </p>
+            )}
+            <fieldset disabled={!writable || mutation.saving}>
+              <Field
+                name="instructions"
+                label="Preparation notes"
+                type="textarea"
+                value={values.instructions}
+                onChange={(value) =>
+                  setValues((v) => ({ ...v, instructions: value }))
+                }
+              />
+              <div className="minute-fields">
+                {[
+                  ["preparationMinutes", "Preparation · minutes"],
+                  ["cookingMinutes", "Cooking · minutes"],
+                ].map(([key, label]) => (
+                  <Field
+                    key={key}
+                    name={key}
+                    label={label}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={values[key]}
+                    onChange={(value) =>
+                      setValues((v) => ({ ...v, [key]: value }))
+                    }
+                  />
+                ))}
+              </div>
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ingredient</th>
+                      <th>Per serving</th>
+                      <th>Note</th>
+                      <th>Include</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {values.items.map((item, index) => {
+                      const ingredient = ingredients.find(
+                          (i) => i.id === item.ingredientId,
+                        ),
+                        setItem = (patch) =>
+                          setValues((v) => ({
+                            ...v,
+                            items: v.items.map((row, i) =>
+                              i === index ? { ...row, ...patch } : row,
+                            ),
+                          }));
+                      return (
+                        <tr key={item.ingredientId}>
+                          <td>
+                            {ingredient.name}
+                            <small>
+                              {ingredient.baseUnit} ·{" "}
+                              {ingredient.quantityOnHand} on shelf
+                              {!ingredient.isActive ? " · inactive" : ""}
+                            </small>
+                          </td>
+                          <td>
+                            <input
+                              aria-label={"Quantity for " + ingredient.name}
+                              type="number"
+                              min="0"
+                              step="0.001"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                setItem({ quantity: e.target.value })
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              aria-label={"Notes for " + ingredient.name}
+                              value={item.notes}
+                              onChange={(e) =>
+                                setItem({ notes: e.target.value })
+                              }
+                            />
+                          </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() =>
+                                setItem({
+                                  quantity:
+                                    Number(item.quantity) > 0 ? "0" : "1",
+                                })
+                              }
+                            >
+                              {Number(item.quantity) > 0 ? "Remove" : "Add"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Blank or zero excludes an ingredient. Saving a recipe does not
+                deduct stock.
+              </p>
+              <button disabled={mutation.saving || !writable}>
+                Save recipe ↗
+              </button>
+            </fieldset>
           </form>
         </section>
         <RecipeUsage recipe={recipe} />

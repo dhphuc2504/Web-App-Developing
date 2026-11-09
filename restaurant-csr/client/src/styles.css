@@ -1034,3 +1034,73 @@ body:has(.pagination-toolbar) {
     padding-bottom: 180px;
   }
 }
+
+/* Auth requests disable their form, not navigation or the whole restaurant. */
+.auth-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+/* Account forms are single-column cards, not the two-column catalog editor. */
+.login-layout {
+  grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+  align-items: start;
+  gap: clamp(28px, 5vw, 64px);
+  max-width: 1040px;
+  margin: clamp(28px, 5vw, 64px) auto;
+}
+.login-layout > div { min-width: 0; padding-top: 28px; }
+.login-layout h1 { font-size: clamp(38px, 4.5vw, 58px); line-height: 1.08; margin: 16px 0 22px; text-wrap: balance; }
+.login-layout > div > p:not(.eyebrow) { max-width: 34ch; font-size: 15px; line-height: 1.75; color: var(--soft); }
+.login-layout .auth-card {
+  display: block;
+  min-width: 0;
+  padding: clamp(24px, 3vw, 38px);
+  border-top: 3px solid #a56d4e;
+  background: #faf7ee;
+  box-shadow: 0 12px 35px #30291d08;
+}
+.auth-card .auth-fields { display: block; width: 100%; min-inline-size: 0; }
+.auth-card label { width: 100%; margin: 0 0 22px; font-size: 13px; line-height: 1.5; }
+.auth-card label input { min-width: 0; width: 100%; min-height: 46px; padding: 12px 14px; font-size: 15px; }
+.auth-card .auth-fields > button { width: 100%; min-height: 48px; margin-top: 16px; }
+.auth-card .auth-fields > button + button { margin-top: 10px; }
+.auth-card p { font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.auth-card .error { margin-bottom: 20px; }
+.auth-card-footer, .login-form > p:last-child { margin: 24px 0 0; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; }
+.auth-card-footer a, .login-form > p:last-child a { color: #925039; text-underline-offset: 4px; }
+.auth-card-footer a:hover, .login-form > p:last-child a:hover { text-decoration: underline; }
+.auth-captcha { margin: 6px 0 0; padding-top: 4px; }
+.auth-captcha > p { margin: 10px 0 0; color: var(--soft); }
+.auth-card button:disabled { cursor: not-allowed; }
+.auth-card [aria-busy="true"] button:disabled { cursor: wait; }
+@media (max-width: 760px) {
+ .login-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; max-width: 520px; margin: 24px auto 40px; }
+ .login-layout > div { padding-top: 0; }
+ .login-layout h1 { font-size: 40px; margin-bottom: 14px; }
+ .login-layout .auth-card { margin-top: 0; padding: 24px; }
+}
+@media (max-width: 420px) {
+ .login-layout h1 { font-size: 34px; }
+ .login-layout .auth-card { padding: 20px; }
+}
+
+.staff-grid { align-items: start; }
+.chef-profile-dialog { width: min(620px, calc(100vw - 32px)); max-height: 88dvh; overflow-y: auto; padding: 34px; border: 1px solid #b9a98d; border-top: 4px solid #a56d4e; border-radius: 5px; background: #faf7ee; color: var(--ink); box-shadow: 0 24px 80px #0005; }
+.chef-profile-dialog::backdrop { background: #111a15aa; backdrop-filter: blur(3px); }
+.chef-profile-heading { padding-right: 30px; }
+.chef-profile-heading h2 { font-size: 32px; margin: 12px 0 8px; overflow-wrap: anywhere; }
+.chef-profile-heading > p:last-child { color: var(--soft); font-size: 14px; overflow-wrap: anywhere; }
+.chef-profile-status { display: flex; flex-wrap: wrap; gap: 14px 30px; padding: 20px 0; font-size: 12px; color: var(--soft); }
+.chef-profile-status strong { display: block; color: var(--ink); text-transform: capitalize; margin-top: 4px; font-size: 14px; }
+.chef-profile-section { padding: 24px 0; border-top: 1px solid var(--line); }
+.chef-profile-dialog h3 { font-size: 21px; margin: 0 0 18px; }
+.chef-profile-dialog label { font-size: 13px; }
+.chef-profile-dialog input:not([type=checkbox]) { min-height: 44px; font-size: 15px; }
+.chef-profile-dialog p { font-size: 13px; line-height: 1.65; }
+.chef-profile-dialog .muted-copy { color: var(--soft); margin: 10px 0 18px; }
+.chef-profile-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.chef-profile-actions button { margin: 0; padding: 12px 20px; min-height: 44px; }
+.chef-delete-section { padding: 22px; border: 1px solid #a65c4438; background: #a65c4407; border-radius: 3px; }
+.chef-delete-section h3 { color: #8a4132; }
+.chef-delete-section p { color: var(--soft); margin-bottom: 14px; }
+.chef-delete-section form { margin-top: 20px; }
+.chef-delete-section .destructive-button { background: #883f31; border-color: #883f31; color: #fff8ed; }
+@media(max-width: 560px) { .chef-profile-dialog { padding: 24px 20px; } .chef-profile-actions > button { flex: 1 1 140px; } .chef-delete-section { padding: 18px 14px; } }

@@ -4,6 +4,7 @@ import {
   ingredientInput,
   uuid,
 } from "../validators/input.js";
+import { canEditDish } from "../middleware/security.js";
 import { AppError } from "../lib/errors.js";
 export function dishSlug(name) {
   return (
@@ -36,8 +37,37 @@ export function createCatalogService(repo, { photos } = {}) {
           })
         : db.category.create({ data });
     },
-    async dish(id, body) {
+    async dish(id, body, actor) {
+      if (
+        actor?.role === "chef" &&
+        ["chefId", "isPublished"].some((key) => Object.hasOwn(body, key))
+      )
+        throw new AppError(
+          403,
+          "Only administrators can assign chefs or change publication.",
+          "FORBIDDEN",
+        );
       const data = parse(dishInput, id, body);
+      if (!id && actor?.role === "chef") {
+        data.chefId = actor.id;
+        data.isPublished = false;
+      }
+      if (data.chefId) {
+        const chef = await db.staffUser.findFirst({
+          where: {
+            id: data.chefId,
+            role: "chef",
+            isActive: true,
+            approvalStatus: "approved",
+          },
+        });
+        if (!chef)
+          throw new AppError(
+            422,
+            "Choose an active approved chef.",
+            "INVALID_CHEF",
+          );
+      }
       if (
         data.imagePath &&
         !(photos
@@ -64,11 +94,17 @@ export function createCatalogService(repo, { photos } = {}) {
             { categoryId: "Choose an active category." },
           );
       }
-      if (id)
-        return db.dish.update({
-          where: { id: uuid.parse(id), archivedAt: null },
-          data,
+      if (id) {
+        uuid.parse(id);
+        return db.$transaction(async (tx) => {
+          await tx.$queryRaw`SELECT id FROM restaurant.dishes WHERE id=${id}::uuid FOR UPDATE`;
+          const dish = await tx.dish.findUnique({ where: { id } });
+          if (!dish || dish.archivedAt)
+            throw new AppError(404, "Dish not found.");
+          if (actor) canEditDish(actor, dish);
+          return tx.dish.update({ where: { id }, data });
         });
+      }
       if (data.slug) return db.dish.create({ data });
       const base = dishSlug(data.name);
       // The unique database constraint resolves races between simultaneous creations.

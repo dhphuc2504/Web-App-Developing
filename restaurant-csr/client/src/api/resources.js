@@ -1,3 +1,4 @@
+import { tokenStore } from "./token.js";
 import { http } from "./client.js";
 const id = (value) => encodeURIComponent(value);
 const collection = (name) => ({
@@ -9,9 +10,45 @@ const collection = (name) => ({
   archive: (key) => http.request(`/${name}/${id(key)}`, { method: "DELETE" }),
 });
 export const sessionApi = {
-  get: (signal) => http.request("/session", { signal }),
-  login: (body) => http.request("/session", { method: "POST", body }),
-  logout: () => http.request("/session", { method: "DELETE" }),
+  get: (signal) =>
+    tokenStore.get()
+      ? http.request("/auth/me", { signal })
+      : Promise.resolve({ user: null }),
+  login: (body) =>
+    http.request("/auth/login", {
+      method: "POST",
+      body,
+      blockUI: false,
+      timeoutMs: 45000,
+    }),
+  otp: (body) =>
+    http.request("/auth/otp", { method: "POST", body, blockUI: false }),
+  logout: async () => {
+    try {
+      await http.request("/auth/logout", { method: "DELETE" });
+    } catch {
+      /* Local logout still succeeds if the network is unavailable. */
+    } finally {
+      tokenStore.set(null);
+    }
+    return { user: null };
+  },
+};
+export const accountApi = {
+  config: (signal) =>
+    http.request("/auth/config", { signal, background: true }),
+  submit: (action, body) =>
+    http.request("/auth/" + action, {
+      method: "POST",
+      body,
+      blockUI: false,
+      timeoutMs: 45000,
+    }),
+  approve: (id, decision) =>
+    http.request("/chefs/" + encodeURIComponent(id) + "/approval", {
+      method: "PATCH",
+      body: { decision },
+    }),
 };
 export const menuApi = {
   list: (search, signal) =>
@@ -23,12 +60,20 @@ export const menuApi = {
 };
 export const dishesApi = {
     ...collection("dishes"),
+    get: (key, signal) => http.request("/staff/dishes/" + id(key), { signal }),
     page: (search, signal) =>
-      http.request("/dishes?" + search, { signal, background: true }),
+      http.request("/staff/dishes?" + search, { signal, background: true }),
   },
   ingredientsApi = collection("ingredients"),
   categoriesApi = collection("categories"),
-  chefsApi = collection("chefs");
+  chefsApi = {
+    ...collection("chefs"),
+    removeAccount: (key, email) =>
+      http.request("/chefs/" + id(key) + "/account", {
+        method: "DELETE",
+        body: { email },
+      }),
+  };
 export const photosApi = {
   upload: (file) => {
     const body = new FormData();

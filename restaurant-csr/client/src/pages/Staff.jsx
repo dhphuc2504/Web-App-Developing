@@ -14,6 +14,7 @@ import {
   useParams,
 } from "react-router-dom";
 import {
+  accountApi,
   categoriesApi,
   chefsApi,
   dishesApi,
@@ -54,28 +55,15 @@ export function Guard({ admin = false, children }) {
 }
 export function Login() {
   const { user, setUser } = useApp(),
-    navigate = useNavigate(),
-    location = useLocation(),
-    mutation = useMutation(),
-    [email, setEmail] = useState(""),
-    [password, setPassword] = useState("");
-  if (user) {
-    const from = location.state?.from;
+    mutation = useMutation();
+  const [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [challenge, setChallenge] = useState(null),
+    [code, setCode] = useState("");
+  if (user)
     return (
-      <Navigate
-        to={
-          typeof from === "string" &&
-          from.startsWith("/") &&
-          !from.startsWith("//")
-            ? from
-            : user.role === "admin"
-              ? "/admin"
-              : "/kitchen"
-        }
-        replace
-      />
+      <Navigate to={user.role === "admin" ? "/admin" : "/kitchen"} replace />
     );
-  }
   return (
     <section className="login-layout">
       <div>
@@ -83,50 +71,97 @@ export function Login() {
         <h1>
           Welcome <em>back.</em>
         </h1>
-        <p>Your place in the kitchen.</p>
+        <p>
+          {challenge
+            ? "Check your email for your six-digit sign-in code."
+            : "Your place in the kitchen."}
+        </p>
       </div>
       <form
-        className="form-panel login-form"
+        className="form-panel login-form auth-card"
         onSubmit={async (e) => {
           e.preventDefault();
           const result = await mutation.run(() =>
-            sessionApi.login({ email, password }),
+            challenge
+              ? sessionApi.otp({ challenge, code })
+              : sessionApi.login({ email, password }),
           );
-          if (result) {
+          if (result?.next === "mfa") {
+            setChallenge(result.challenge);
             setPassword("");
+          } else if (result?.user) {
             setUser(result.user);
-            const from = location.state?.from;
-            navigate(
-              typeof from === "string" &&
-                from.startsWith("/") &&
-                !from.startsWith("//")
-                ? from
-                : result.user.role === "admin"
-                  ? "/admin"
-                  : "/kitchen",
-              { replace: true },
-            );
           }
         }}
       >
         <ErrorNotice error={mutation.error} />
-        <Field
-          name="email"
-          label="Email address"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          required
-        />
-        <Field
-          name="password"
-          label="Password"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          required
-        />
-        <button disabled={mutation.saving}>Enter the house ↗</button>
+        {mutation.saving && (
+          <p role="status">
+            {challenge
+              ? "Checking your code…"
+              : "Checking your account and sending a sign-in code…"}
+          </p>
+        )}
+        <fieldset className="auth-fields" disabled={mutation.saving}>
+          {challenge ? (
+            <>
+              <Field
+                name="code"
+                label="Email sign-in code (valid for 5 minutes)"
+                value={code}
+                onChange={setCode}
+                required
+              />
+              <p>
+                Five incorrect codes exhaust this challenge. Sign in again to
+                request another email after one minute.
+              </p>
+            </>
+          ) : (
+            <>
+              <Field
+                name="email"
+                label="Email address"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                required
+              />
+              <Field
+                name="password"
+                label="Password"
+                type="password"
+                value={password}
+                onChange={setPassword}
+                required
+              />
+            </>
+          )}
+          <button disabled={mutation.saving}>
+            {challenge ? "Verify code & enter" : "Send sign-in code"} ↗
+          </button>
+          {challenge && (
+            <button
+              type="button"
+              className="secondary"
+              disabled={mutation.saving}
+              onClick={() => {
+                setChallenge(null);
+                setCode("");
+                mutation.clearError();
+              }}
+            >
+              Back to sign in / request another code
+            </button>
+          )}
+        </fieldset>
+        {mutation.error?.code === "ACCOUNT_NOT_ACTIVATED" && (
+          <Link to="/resend-verification">Resend verification email</Link>
+        )}
+        <p>
+          <Link to="/signup">Chef registration</Link> ·{" "}
+          <Link to="/forgot-password">Forgot password?</Link>
+        </p>
       </form>
     </section>
   );
@@ -134,7 +169,7 @@ export function Login() {
 export function Kitchen() {
   const resource = useDishBrowser(dishesApi.page),
     [editing, setEditing] = useState(null),
-    { confirm } = useApp(),
+    { confirm, user } = useApp(),
     mutation = useMutation();
   return (
     <>
@@ -209,6 +244,7 @@ export function Kitchen() {
                           Recipe & ingredients ↗
                         </Link>
                         <button
+                          hidden={user.role !== "admin" && d.chefId !== user.id}
                           className="text-button"
                           onClick={(event) => {
                             const rect = event.currentTarget
@@ -230,6 +266,7 @@ export function Kitchen() {
                           Edit dish
                         </button>
                         <button
+                          hidden={user.role !== "admin"}
                           className="danger-link"
                           onClick={async () => {
                             if (
@@ -846,85 +883,207 @@ export function Chefs({ embedded = false }) {
     </>
   );
 }
-function ChefCard({ user, reload, confirm }) {
-  const [name, setName] = useState(user.displayName),
-    [editing, setEditing] = useState(false),
-    [active, setActive] = useState(user.isActive),
-    mutation = useMutation();
+function ChefCard({ user, reload }) {
+  const [editing, setEditing] = useState(false);
+  const status = !user.isActive
+    ? "Access removed"
+    : user.approvalStatus === "pending"
+      ? "Pending approval"
+      : user.approvalStatus === "rejected"
+        ? "Rejected"
+        : !user.emailVerifiedAt
+          ? "Awaiting verification"
+          : "Active";
   return (
     <article className="staff-card">
       <button
         className="chef-card-summary"
-        aria-expanded={editing}
+        aria-haspopup="dialog"
         aria-label={"Edit chef " + user.displayName}
-        onClick={() => {
-          setName(user.displayName);
-          setActive(user.isActive);
-          mutation.clearError();
-          setEditing((value) => !value);
-        }}
+        onClick={() => setEditing(true)}
       >
         <h3>{user.displayName}</h3>
         <p className="staff-email">{user.email}</p>
-        <span className="status-tag">
-          {user.isActive ? "Active" : "Access removed"}
-        </span>
-        <small>{editing ? "Close profile ↑" : "View and edit profile ↗"}</small>
+        <span className="status-tag">{status}</span>
+        <small>View and edit profile ↗</small>
       </button>
       {editing && (
-        <div className="chef-card-editor">
-          <ErrorNotice error={mutation.error} />
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (
-                await mutation.run(() =>
-                  chefsApi.update(user.id, {
-                    displayName: name,
-                    isActive: active,
-                  }),
-                )
-              ) {
-                setEditing(false);
-                reload();
-              }
-            }}
-          >
+        <ChefProfile
+          user={user}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            reload();
+          }}
+        />
+      )}
+    </article>
+  );
+}
+function ChefProfile({ user, onClose, onSaved }) {
+  const [name, setName] = useState(user.displayName),
+    [active, setActive] = useState(user.isActive),
+    [deleting, setDeleting] = useState(false),
+    [confirmation, setConfirmation] = useState(""),
+    mutation = useMutation();
+  const close = () => {
+    if (!mutation.saving) onClose();
+  };
+  return (
+    <Modal
+      label={"Chef profile: " + user.displayName}
+      className="chef-profile-dialog"
+      onClose={close}
+    >
+      <header className="chef-profile-heading">
+        <p className="eyebrow">三太子亭 · Staff profile</p>
+        <h2>{user.displayName}</h2>
+        <p>{user.email}</p>
+      </header>
+      <ErrorNotice error={mutation.error} />
+      <div className="chef-profile-status">
+        <span>
+          Email{" "}
+          <strong>{user.emailVerifiedAt ? "Verified" : "Not verified"}</strong>
+        </span>
+        <span>
+          Application <strong>{user.approvalStatus}</strong>
+        </span>
+      </div>
+      <section className="chef-profile-section">
+        <h3>Profile & access</h3>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (
+              await mutation.run(() =>
+                chefsApi.update(user.id, {
+                  displayName: name,
+                  isActive: active,
+                }),
+              )
+            )
+              onSaved();
+          }}
+        >
+          <fieldset disabled={mutation.saving} className="auth-fields">
             <Field
               label="Display name"
               name="displayName"
               value={name}
               onChange={setName}
+              required
             />
             <Field
-              label="Active access"
+              label="Allow staff access"
               name="isActive"
               type="checkbox"
               value={active}
               onChange={setActive}
             />
-            <button>Save profile</button>
-          </form>
-          {user.isActive && (
+            <p className="muted-copy">
+              Sign-in also requires a verified email and an approved
+              application.
+            </p>
+            <div className="chef-profile-actions">
+              <button>Save changes</button>
+              <button type="button" className="secondary" onClick={close}>
+                Cancel
+              </button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+      <section className="chef-profile-section">
+        <h3>Application decision</h3>
+        <div className="chef-profile-actions">
+          {["approved", "rejected"].map((decision) => (
             <button
-              className="danger-link"
+              key={decision}
+              className={decision === "rejected" ? "secondary" : ""}
+              disabled={mutation.saving || user.approvalStatus === decision}
               onClick={async () => {
                 if (
-                  await confirm(
-                    "Remove kitchen access for " + user.displayName + "?",
+                  await mutation.run(() =>
+                    accountApi.approve(user.id, decision),
                   )
                 )
-                  if (await mutation.run(() => chefsApi.archive(user.id))) {
-                    setEditing(false);
-                    reload();
-                  }
+                  onSaved();
               }}
             >
-              Remove chef access
+              {decision === "approved" ? "Approve chef" : "Reject application"}
             </button>
-          )}
+          ))}
         </div>
-      )}
-    </article>
+      </section>
+      <section className="chef-delete-section">
+        <h3>Delete account permanently</h3>
+        <p>
+          Free this email for registration again. This cannot be undone. Dishes
+          remain but become unassigned. Accounts referenced by recipes or stock
+          journals cannot be deleted.
+        </p>
+        <p>
+          Already-issued access tokens can remain valid for up to 15 minutes.
+        </p>
+        {!deleting ? (
+          <button
+            type="button"
+            className="danger-link"
+            disabled={mutation.saving}
+            onClick={() => {
+              mutation.clearError();
+              setDeleting(true);
+            }}
+          >
+            Delete chef account…
+          </button>
+        ) : (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (
+                await mutation.run(() =>
+                  chefsApi.removeAccount(user.id, confirmation),
+                )
+              )
+                onSaved();
+            }}
+          >
+            <fieldset className="auth-fields" disabled={mutation.saving}>
+              <Field
+                label={"Type " + user.email + " to confirm"}
+                name="confirmationEmail"
+                type="email"
+                value={confirmation}
+                onChange={setConfirmation}
+                required
+              />
+              <div className="chef-profile-actions">
+                <button
+                  className="destructive-button"
+                  disabled={
+                    confirmation.trim().toLowerCase() !==
+                    user.email.toLowerCase()
+                  }
+                >
+                  Permanently delete
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setDeleting(false);
+                    setConfirmation("");
+                  }}
+                >
+                  Keep account
+                </button>
+              </div>
+            </fieldset>
+          </form>
+        )}
+      </section>
+    </Modal>
   );
 }

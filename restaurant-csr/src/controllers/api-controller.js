@@ -1,9 +1,8 @@
+import { createHash } from "node:crypto";
 import { queryDishes } from "../models/dish-query.js";
-import { promisify } from "node:util";
 import { z } from "zod";
 import { success } from "../lib/responses.js";
 import { AppError } from "../lib/errors.js";
-import { ensureCsrf } from "../middleware/security.js";
 import {
   uuid,
   categoryInput,
@@ -24,6 +23,8 @@ const staffDto = (user) => ({
   displayName: user.displayName,
   role: user.role,
   isActive: user.isActive,
+  approvalStatus: user.approvalStatus,
+  emailVerifiedAt: user.emailVerifiedAt,
 });
 const schemas = {
   categories: categoryInput,
@@ -47,21 +48,12 @@ export function createApiController({
   return {
     uploadPhoto: async (req, res) =>
       success(res, await photos.upload(req.file)),
-    session: (req, res) =>
-      success(res, { user: req.user, csrfToken: ensureCsrf(req) }),
-    login: async (req, res) => {
-      const user = await auth.login(req.body);
-      await promisify(req.session.regenerate).call(req.session);
-      req.session.userId = user.id;
-      const csrfToken = ensureCsrf(req);
-      await promisify(req.session.save).call(req.session);
-      res.locals.loginSucceeded = true;
-      success(res, { user: staffDto(user), csrfToken });
-    },
-    logout: async (req, res) => {
-      await promisify(req.session.destroy).call(req.session);
-      res.clearCookie("restaurant.csr.sid", { path: "/" });
-      success(res, { user: null });
+    publicDish: async (req, res) => {
+      const dish = await db.dish.findUnique({
+        where: { id: validId(req.params.id) },
+        select: { slug: true },
+      });
+      success(res, found(dish && (await repo.menu.detail(dish.slug))));
     },
     menu: async (req, res) => success(res, await queryDishes(db, req.query)),
     menuDish: async (req, res) =>
@@ -96,7 +88,7 @@ export function createApiController({
           "Provide at least one field to update.",
           "EMPTY_PATCH",
         );
-      success(res, await catalog[models[resource]](id, data));
+      success(res, await catalog[models[resource]](id, data, req.user));
     },
     archive: (resource) => async (req, res) =>
       success(
@@ -123,6 +115,7 @@ export function createApiController({
         validId(req.params.id),
         req.body,
         req.user.id,
+        req.user,
       );
       success(
         res,
@@ -198,6 +191,49 @@ export function createApiController({
         res,
         staffDto(await db.staffUser.update({ where: { id }, data })),
       );
+    },
+    deleteChef: async (req, res) => {
+      const id = validId(req.params.id);
+      const input = z
+        .object({ email: z.string().trim().toLowerCase().email() })
+        .strict()
+        .parse(req.body);
+      const deleted = await db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM restaurant.staff_users WHERE id=${id}::uuid FOR UPDATE`;
+        const user = await tx.staffUser.findUnique({ where: { id } });
+        if (!user || user.role !== "chef")
+          throw new AppError(404, "Chef account not found.");
+        if (user.id === req.user.id)
+          throw new AppError(
+            403,
+            "You cannot delete your own account.",
+            "FORBIDDEN",
+          );
+        if (input.email !== user.email.toLowerCase())
+          throw new AppError(
+            422,
+            "Enter the chef email address to confirm deletion.",
+            "CONFIRMATION_REQUIRED",
+            { email: "Must match this chef account." },
+          );
+        const recipes = await tx.recipe.count({ where: { updatedBy: id } }),
+          operations = await tx.stockOperation.count({
+            where: { createdBy: id },
+          });
+        if (recipes || operations)
+          throw new AppError(
+            409,
+            "This chef is referenced by recipes or stock journals. Remove access instead to preserve restaurant history.",
+            "CHEF_HAS_HISTORY",
+          );
+        // Foreign keys cascade authentication challenges and unassign dishes, never delete dishes.
+        await tx.staffUser.delete({ where: { id } });
+        await tx.failedAttempt.deleteMany({
+          where: { key: createHash("sha256").update(user.email).digest("hex") },
+        });
+        return { id, deleted: true };
+      });
+      success(res, deleted);
     },
     removeChef: async (req, res) => {
       const id = validId(req.params.id),
