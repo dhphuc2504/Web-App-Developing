@@ -1,4 +1,4 @@
-# Restaurant API reference (Block 9)
+# Restaurant API reference (Blocks 9–10)
 
 Base path: `/api`. Requests with JSON bodies require `Content-Type: application/json`. Responses use `application/json`. Staff resources require `Authorization: Bearer <accessToken>`. No cookies or CSRF headers are used. See [authentication endpoints and limits](block9-authentication.md). Logout uses DELETE without a body.
 
@@ -31,8 +31,8 @@ Frontend-only errors identify transport or protocol problems: `NETWORK_ERROR`, `
 | Method | URL | Access | Result |
 |---|---|---|---|
 | GET | `/auth/me` | Staff | Identity from verified JWT; zero database queries |
-| POST | `/auth/login` | Public | Password check → email OTP challenge |
-| POST | `/auth/otp` | Public, challenge + code | Access JWT and safe identity |
+| POST | `/auth/login` | Public | Password check → email OTP or admin TOTP challenge |
+| POST | `/auth/otp` | Public, challenge + code | Access JWT and safe identity, or replacement-code acknowledgement after last-code recovery |
 | DELETE | `/auth/logout` | Staff | `{user:null}`; browser discards JWT |
 | GET | `/menu` | Public | `{items,categories,total,page,pageCount}` |
 | GET | `/menu/:slug` | Public | Published dish in an active category |
@@ -114,3 +114,7 @@ For new dishes, `slug` is optional and generated uniquely from `name` when omitt
 ## Block 7 pagination update
 
 The menu and staff dishes collections now use the paged response and full-text query contract in [Block 7 pagination](block7-pagination.md). This supersedes the earlier four-item-only menu and 100-record dish list descriptions. `/api/dishes` now returns `{items, categories, total, page, pageSize, pageCount, hasNext, mode}` inside `data`, not an array. All other resource lists retain their existing response shapes.
+
+## Administrator authenticator routes
+
+Optional TOTP enrollment, recovery-code replacement and disabling use `/api/auth/mfa`. Login now returns `method: "email"` or `method: "totp"`; `/api/auth/otp` accepts `method: "recovery"` for a saved one-use recovery code. The final recovery code requires acknowledging a replacement set before a JWT is issued. See the complete [MFA route contract](block9-authentication.md#additional-api-routes).

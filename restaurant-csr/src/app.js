@@ -1,3 +1,4 @@
+import { createMfaService } from "./services/mfa-service.js";
 import express from "express";
 import { allowedOrigins } from "./lib/origins.js";
 import { createJwtService } from "./services/jwt-service.js";
@@ -34,7 +35,8 @@ export function createApp({
     jwt = createJwtService(config),
     delivery = injectedDelivery || createAccountDelivery(config),
     login = createLoginService(db, delivery, jwt, config),
-    accounts = createAccountService(db, delivery);
+    accounts = createAccountService(db, delivery),
+    mfa = createMfaService(db, delivery, jwt, config);
   app.disable("x-powered-by");
   if (config.NODE_ENV === "production") app.set("trust proxy", 1);
   app.use(
@@ -135,6 +137,52 @@ export function createApp({
   );
   app.post("/api/auth/otp", authLimit, async (req, res) =>
     success(res, await login.verify(req.body)),
+  );
+  app.get("/api/auth/mfa", allow("admin"), async (req, res) =>
+    success(res, await mfa.status(req.user)),
+  );
+  app.post("/api/auth/mfa/setup", allow("admin"), authLimit, async (req, res) =>
+    success(res, await mfa.startSetup(req.user, req.body)),
+  );
+  app.post(
+    "/api/auth/mfa/setup/verify",
+    allow("admin"),
+    authLimit,
+    async (req, res) =>
+      success(res, await mfa.verifySetupEmail(req.user, req.body)),
+  );
+  app.post(
+    "/api/auth/mfa/setup/confirm",
+    allow("admin"),
+    authLimit,
+    async (req, res) =>
+      success(res, await mfa.confirmSetup(req.user, req.body)),
+  );
+  app.post(
+    "/api/auth/mfa/setup/ack",
+    allow("admin"),
+    authLimit,
+    async (req, res) =>
+      success(res, await mfa.acknowledge(req.user, req.body, "setup_ack")),
+  );
+  app.post(
+    "/api/auth/mfa/recovery",
+    allow("admin"),
+    authLimit,
+    async (req, res) => success(res, await mfa.regenerate(req.user, req.body)),
+  );
+  app.post(
+    "/api/auth/mfa/recovery/ack",
+    allow("admin"),
+    authLimit,
+    async (req, res) =>
+      success(res, await mfa.acknowledge(req.user, req.body, "rotate_ack")),
+  );
+  app.post("/api/auth/mfa/login/ack", authLimit, async (req, res) =>
+    success(res, await mfa.acknowledge(null, req.body, "login_ack")),
+  );
+  app.delete("/api/auth/mfa", allow("admin"), authLimit, async (req, res) =>
+    success(res, await mfa.disable(req.user, req.body)),
   );
   app.post("/api/auth/signup", authLimit, async (req, res) => {
     await accounts.register(req.body);

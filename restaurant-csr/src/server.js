@@ -23,6 +23,9 @@ try {
         db.loginChallenge.deleteMany({
           where: { expiresAt: { lt: new Date() } },
         }),
+        db.mfaChallenge.deleteMany({
+          where: { expiresAt: { lt: new Date() } },
+        }),
         db.failedAttempt.deleteMany({
           where: { expiresAt: { lt: new Date() } },
         }),

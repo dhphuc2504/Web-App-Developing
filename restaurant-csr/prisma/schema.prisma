@@ -20,6 +20,9 @@ model StaffUser {
   emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz
   approvalStatus String @default("pending") @map("approval_status") @db.VarChar(10)
   sessionVersion Int @default(0) @map("session_version")
+  adminMfa AdminMfa?
+  mfaChallenges MfaChallenge[]
+  recoveryCodes MfaRecoveryCode[]
   tokens AuthToken[]
   loginChallenges LoginChallenge[]
   assignedDishes Dish[]
@@ -203,4 +206,44 @@ model FailedAttempt {
  expiresAt DateTime @map("expires_at") @db.Timestamptz
  @@map("failed_attempts")
  @@schema("restaurant")
+}
+
+model AdminMfa {
+  userId String @id @map("user_id") @db.Uuid
+  user StaffUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secret String?
+  enabled Boolean @default(false)
+  lastStep Int @default(-1) @map("last_step")
+  failures Int @default(0)
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz
+  @@map("admin_mfa")
+  @@schema("restaurant")
+}
+
+model MfaChallenge {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user StaffUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique @map("token_hash") @db.VarChar(64)
+  purpose String @db.VarChar(24)
+  version Int
+  payload Json
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  usedAt DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("mfa_challenges")
+  @@schema("restaurant")
+}
+
+model MfaRecoveryCode {
+  id String @id @db.VarChar(8)
+  userId String @map("user_id") @db.Uuid
+  user StaffUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hash String
+  usedAt DateTime? @map("used_at") @db.Timestamptz
+  @@index([userId])
+  @@map("mfa_recovery_codes")
+  @@schema("restaurant")
 }

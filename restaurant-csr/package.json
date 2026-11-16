@@ -1,7 +1,7 @@
 {
   "name": "restaurant-csr",
   "version": "1.0.0",
-  "description": "Blocks 6–9: React restaurant with JWT, email OTP and role/ownership authorization",
+  "description": "Blocks 6–10: React restaurant with JWT, admin TOTP, email OTP and role/ownership authorization",
   "main": "src/server.js",
   "scripts": {
     "dev": "concurrently -k -n api,web \"node --watch src/server.js\" \"vite --host 127.0.0.1\"",
@@ -19,7 +19,8 @@
     "demo:seed:dishes": "node scripts/seed-pagination-dishes.js",
     "db:migrate:search": "node scripts/migrate-dish-search.js",
     "db:check:search": "node scripts/check-dish-search.js",
-    "db:migrate:auth": "node scripts/migrate-auth.js"
+    "db:migrate:auth": "node scripts/migrate-auth.js",
+    "db:migrate:mfa": "node scripts/migrate-mfa.js"
   },
   "keywords": [],
   "author": "",
@@ -39,7 +40,9 @@
     "jose": "^6.2.16",
     "multer": "^2.4.0",
     "nodemailer": "^10.4.0",
+    "otplib": "^13.6.0",
     "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.0",

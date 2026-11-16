@@ -1,10 +1,10 @@
 # 三太子亭 — Santaishi-tei
 
-A Japanese restaurant website and staff workspace. This repository contains the CSR application developed in Blocks 6–7 and extended with Block 9 authentication and authorization. React renders the interface in the browser, while an Express REST API uses Prisma to access Supabase PostgreSQL.
+A Japanese restaurant website and staff workspace. This repository contains the CSR application developed in Blocks 6–7 and extended with Block 9 JWT authentication/authorization and Block 10 administrator TOTP MFA. React renders the interface in the browser, while an Express REST API uses Prisma to access Supabase PostgreSQL.
 
 Visitors explore the restaurant, browse dishes and view public ingredient information. Chefs maintain their assigned dishes and recipes and record ingredient usage or waste. Administrators additionally manage ingredients, categories, stock receipts, corrections and chef accounts. Customer accounts, ordering and reservations are outside the project's scope.
 
-Block 9 adds email activation, administrator approval, password recovery and an email OTP at each staff login. Authentication uses 15-minute JWTs in sessionStorage with no application cookies. See [Block 9 authentication and permissions](docs/block9-authentication.md) for flows, expiry, API contracts and limitations.
+Block 9 adds email activation, administrator approval, password recovery and email OTP at staff login. **Block 10** adds optional administrator TOTP, a 30-second lockout on the fourth failure, replay protection and hashed, single-use recovery codes. Authentication uses 15-minute JWTs in sessionStorage with no application cookies. See [Blocks 9–10 authentication and permissions](docs/block9-authentication.md) for flows, expiry, API contracts and limitations.
 
 ## Requirements and run modes
 
@@ -47,7 +47,7 @@ The `--large` option adds 1,200 temporary demo dishes for pagination and search.
 | Administrator | `admin@example.test` | `Fixture-only-passphrase-2026` |
 | Chef | `chef@example.test` | `Fixture-only-passphrase-2026` |
 
-For this isolated preview only, the generated sign-in code is printed in the terminal instead of sent by email. Enter that code after the password step. The real application never logs codes.
+For this isolated preview only, sign-in and authenticator-setup email codes are printed in the terminal instead of sent by email. Google Authenticator enrollment and TOTP verification work in the preview, but restart discards its accounts and authenticator configuration. Enter that code after the password step. The real application never logs codes.
 
 The preview injects mock delivery and Storage. It does not demonstrate real SMTP delivery or Google CAPTCHA verification. Use the configured Supabase mode to test those integrations.
 
@@ -84,6 +84,7 @@ PORT=3001
 APP_ORIGIN=http://127.0.0.1:3000
 DATABASE_URL="YOUR_SUPABASE_POSTGRESQL_CONNECTION_URI"
 JWT_SECRET="YOUR_RANDOM_SECRET_AT_LEAST_32_CHARACTERS"
+MFA_ENCRYPTION_KEY="YOUR_SEPARATE_RANDOM_64_HEX_CHARACTER_KEY"
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -110,13 +111,15 @@ Generate a JWT signing secret locally with:
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Store the result in `.env`, not in source code. Do not share screenshots containing secrets. Never prefix server secrets with `VITE_`; Vite is configured not to read this project's environment files.
+Generate a separate authenticator encryption key with `openssl rand -hex 32` and set `MFA_ENCRYPTION_KEY`. Keep this key backed up and stable: changing it makes existing authenticator secrets unreadable. Never reuse `JWT_SECRET` for it.
+
+Store the results in `.env`, not in source code. Do not share screenshots containing secrets. Never prefix server secrets with `VITE_`; Vite is configured not to read this project's environment files.
 
 Storage settings are required for photo uploads, not for displaying existing local images. The legacy `SUPABASE_SERVICE_ROLE_KEY` is supported instead of `SUPABASE_SECRET_KEY`. `SUPABASE_STORAGE_BUCKET` is a bucket **name**, not another key; it defaults to `dish-photos`. See [photo upload configuration](docs/photo-uploads.md).
 
 ### Email and CAPTCHA setup
 
-Staff must have a real inbox they can access: both administrators and chefs receive an email code at each login. The SMTP sender and the staff recipient may use the same inbox. With Gmail SMTP, use an app password for `SMTP_PASSWORD`, not the ordinary account password.
+Staff must have a real inbox they can access for activation, password recovery and authenticator enrollment. Chefs and administrators without TOTP receive an email code at each login; administrators with TOTP use their authenticator instead. The SMTP sender and the staff recipient may use the same inbox. With Gmail SMTP, use an app password for `SMTP_PASSWORD`, not the ordinary account password.
 
 Use **reCAPTCHA v2 checkbox** keys for registration. Add the development hostnames used by the browser (`localhost` and/or `127.0.0.1`) to the key's allowed domains; configure the deployed hostname separately. Do not use v3 keys. The site key is public; the secret key remains server-only.
 
@@ -124,7 +127,7 @@ Use **reCAPTCHA v2 checkbox** keys for registration. Add the development hostnam
 
 ### Prepare the database only when necessary
 
-**Using the team's existing exercise database:** do not recreate or seed it. Block 9 requires the additive authentication/ownership migration below. Existing passwords are preserved; sign-in also requires access to the account email.
+**Using the team's existing exercise database:** do not recreate or seed it. The Block 9 authentication/ownership and Block 10 MFA migrations are already applied to the submission's shared exercise database. Other copies may need the migrations below. Existing passwords and restaurant records are preserved.
 
 **Adding Block 9 to an existing Block 6/7 restaurant database:** the database owner applies the authentication/ownership migration with:
 
@@ -133,6 +136,14 @@ npm run db:migrate:auth
 ```
 
 This wrapper privately loads server configuration, applies the Block 9 migration transactionally, records its Prisma migration history and verifies existing fields and records are unchanged. It expects the earlier restaurant schema and its Prisma migration history in `restaurant`. It applies only the Block 9 migration, not every older pending migration. A matching applied migration can be rerun safely. It is not the initialization command for an empty database.
+
+**Adding Block 10 to an existing Block 9 database:** the database owner applies:
+
+```sh
+npm run db:migrate:mfa
+```
+
+This additive migration creates `admin_mfa`, `mfa_challenges` and `mfa_recovery_codes`, verifies that existing data is unchanged, and records its migration checksum. It is safe to rerun an already applied matching migration. It does not enable TOTP for existing admins automatically. For a Block 6/7 database, apply the authentication migration first, then this MFA migration. Restart the API after migration or configuration changes.
 
 **Using a new, empty database:** configure `MIGRATION_DATABASE_URL` with the connection intended for migrations and the query parameter `schema=restaurant`. Use `?schema=restaurant` if the URI has no query string, or `&schema=restaurant` if it already has one. Then run:
 
@@ -176,9 +187,55 @@ For later runs, normally only `npm run dev` is needed. After pulling updates, re
 4. Sign in with email and password. Enter the six-digit email OTP within **5 minutes**. Five incorrect codes exhaust that challenge. Return to sign-in to request another after the one-minute cooldown.
 5. After OTP verification, the browser receives an access JWT valid for **15 minutes**. There is no refresh token or remember-me cookie; sign in again after expiry.
 
-Forgot-password links are single-use and expire after **30 minutes**. A reset invalidates pending login challenges. Both chefs and admins use email OTP; TOTP authenticator apps and recovery codes are outside this iteration.
+Forgot-password links are single-use and expire after **30 minutes**. A reset invalidates pending login challenges. Chefs keep email OTP. Administrators can enable TOTP and recovery codes using the Block 10 flow below.
 
 An administrator account inherited from demo data may contain a fictional email. A database owner can replace that email in `restaurant.staff_users` with a unique real address while preserving its ID, password and role. An address already used by another staff account cannot be assigned to the administrator.
+
+### Block 10: set up Google Authenticator
+
+Prerequisites: an active, approved, email-verified administrator account; access to its inbox; the Block 10 migration; and a configured `MFA_ENCRYPTION_KEY`. Existing admins keep email sign-in until they complete enrollment. The authenticator is enabled per admin account, not globally.
+
+1. Start the website with `npm run dev` and open `http://127.0.0.1:3000` (or the configured browser origin). Sign in as admin using the password and email code.
+2. Install **Google Authenticator** on a phone. It can be used without a Google account. Enable automatic date/time on the phone and keep the server clock synchronized. See [Google Authenticator help](https://support.google.com/accounts/answer/1066447?hl=en).
+3. Open **Office → Account security → Set up authenticator**.
+4. Confirm the current password, then enter the six-digit setup code delivered by email. The email challenge expires after five minutes. In the disposable preview, find this fictional setup code in the terminal instead.
+5. In Google Authenticator, select **+ / Add a code → Scan a QR code** and scan the restaurant's QR code. If scanning is unavailable, expand **Can’t scan? Enter this key manually** on the website, choose **Enter a setup key** in Authenticator, enter the displayed key, and select **Time based**. A label such as “Santaishi-tei admin” identifies the entry.
+6. Submit the six-digit code shown by that authenticator entry. The QR/manual-key confirmation step expires after ten minutes.
+7. Save the ten recovery codes using **Download recovery codes**, or copy them into secure storage separate from the phone. Select **I saved my recovery codes securely**, then **Finish & continue** within ten minutes. Codes are shown only once. TOTP becomes active only after this acknowledgement.
+8. Sign out and sign in again. The admin now receives an authenticator challenge instead of a login email. If the setup code is still displayed, wait for the next code: a successfully used time step cannot be reused.
+
+The QR code/manual key is the authenticator secret. Keep it and the recovery-code file private; do not include them in screenshots, source control or the submission ZIP. No Google API key is needed for Google Authenticator. The restaurant generates the QR code locally with `qrcode` and verifies TOTP using `otplib`.
+
+### Block 10: manual testing checklist
+
+Run tests with the same admin account that completed enrollment. A successful factor verification resets prior MFA failures; complete a successful login before starting the four-failure test so earlier replay tests do not affect the count.
+
+| Test | Actions | Expected result |
+|---|---|---|
+| Normal TOTP login | Sign out, submit the correct admin email/password, then a fresh authenticator code. | Login succeeds without sending an email sign-in code. |
+| Reject a reused code | After a successful login, sign out and attempt the same code again. Then wait for a new code and submit it. | The used code fails; the fresh code succeeds. |
+| Fourth-failure lockout | After a successful login, sign out, pass the password step and submit an incorrect six-digit code four times. Use a value different from the displayed code. | Failures 1–3 show an invalid-code error; failure 4 shows `MFA_LOCKED` and a 30-second countdown. |
+| Lockout expiry | Wait until the countdown finishes, then submit a fresh correct code. | Login succeeds. The challenge must still be within its five-minute lifetime; otherwise restart sign-in. |
+| Account-wide lockout | In a separate run of the lockout test, return to password login while locked and attempt to start another login. | The account remains locked. Starting another challenge or using recovery does not bypass it. Requests during lockout do not extend the server deadline. |
+| Recovery login | Sign out, pass the password step, select **Use a recovery code instead**, and submit one complete saved code. | Login succeeds; Account security shows nine unused codes if the set was previously untouched. |
+| Recovery replay | Sign out and try that same recovery code again. | It is rejected. Another unused recovery code or a fresh authenticator code still works. |
+| Replace recovery codes | Open Account security → **Replace recovery codes**. Confirm the password and a fresh authenticator or unused recovery code; save and acknowledge the new set. | Ten new codes become active; every code from the previous set stops working. |
+| Turn TOTP off | Open Account security → **Turn off authenticator**. Confirm the password and a fresh authenticator or unused recovery code. Sign out and log in again. | Login returns to email OTP. Previous authenticator/recovery codes no longer authorize login. |
+| Chef regression | Sign in as a chef. | Chef login still uses email OTP; the admin Security page is forbidden. |
+
+**Last-code recovery:** optionally test in the disposable preview by signing in with each unused recovery code. When the final code is consumed, the app displays a replacement set and requires saving/acknowledging it before issuing the JWT. Complete this step within ten minutes. Do not discard the authenticator entry while testing: if the final-code response is lost or expires, the authenticator is needed to recover.
+
+**Separate limits:** the fourth-failure TOTP lockout lasts 30 seconds. The existing per-IP limit allows 20 authentication mutations in 15 minutes, and password login has a separate per-email limit of ten attempts in 15 minutes. A “try again after 15 minutes” message is the broader `RATE_LIMITED` limit, not the TOTP countdown. Space out longer demonstrations, especially the ten-code exhaustion test. The automated suite tests exhaustion without waiting on the HTTP IP limiter.
+
+**Troubleshooting:** use the correct Santaishi-tei entry, enable automatic phone time, wait for a fresh code after any successful verification, and check that the server clock is correct. Setup errors mentioning authenticator configuration require a 64-hex-character `MFA_ENCRYPTION_KEY` and an API restart. Keep the original encryption key stable; generating a different one cannot decrypt existing enrollment secrets.
+
+### Block 10: security behavior and automated checks
+
+Authenticator secrets are encrypted with AES-256-GCM using the separate encryption key. Recovery codes are stored as Argon2id hashes. Database row locks make code consumption and accepted time-step updates atomic, preventing concurrent reuse. The persistent per-account failure counter survives browser refreshes and application restarts.
+
+Only admins may manage MFA, and settings apply to the verified JWT subject's own active, approved, verified account. Settings changes require fresh proof. JWT verification itself remains database-free and cookie-free; checking MFA state and dish ownership are separate resource operations. Existing JWTs may remain valid for their remaining lifetime, up to 15 minutes, after MFA changes. The SSR sibling does not implement the CSR TOTP feature.
+
+Run `npm test` for the complete isolated suite, or after installing and generating Prisma Client, run `node --test tests/mfa.test.js` for focused MFA checks. Tests use a disposable database and mocked email, never the real `.env` or Supabase. The last Block 10 verification run passed **66 tests**, including enrollment, encrypted/hashed storage, lockout timing, concurrent replay protection, recovery replacement, permissions and restaurant regressions.
 
 ### Manage chef accounts
 
@@ -300,7 +357,7 @@ The client distinguishes network, HTTP/protocol and application failures and bra
 
 `restaurant-csr` sits beside `restaurant-mvc`, the SSR application used for Blocks 5 and 8. Block 6 replaced EJS pages, HTML form redirects and method override with React, History API navigation and actual JSON PATCH/PUT/DELETE requests. Block 7 extends the same CSR folder with pagination, search, filters and indexes.
 
-When configured for the same Supabase database, both applications share business records in the `restaurant` schema. Changes in either application affect that shared data. Block 9 CSR uses Bearer JWTs and no session cookies; the shared sessions table remains for SSR only. Block 9 ports registration, verification, approval and recovery into React/API flows and adds email OTP, JWTs and dish ownership.
+When configured for the same Supabase database, both applications share business records in the `restaurant` schema. Changes in either application affect that shared data. Block 9 CSR uses Bearer JWTs and no session cookies; the shared sessions table remains for SSR only. Block 9 ports registration, verification, approval and recovery into React/API flows and adds email OTP, JWTs and dish ownership. Block 10 adds optional admin TOTP, recovery codes and persistent MFA lockout/replay protection in this same CSR folder.
 
 JWT verification checks signature, expiry, issuer, audience and signed identity/role claims **without querying the database**. Dish-ownership authorization separately reads the target dish; restaurant CRUD still uses Prisma. The browser stores tokens in sessionStorage and sends `Authorization: Bearer …`, with cookies omitted. HTTP 401 clears the token and redirects to login; HTTP 403 retains it and displays the permission error.
 
@@ -316,7 +373,7 @@ Run the automated suite with:
 npm test
 ```
 
-It generates Prisma Client, builds React and runs tests against an isolated PGlite database with mocked Storage, email delivery and CAPTCHA responses. Tests do not load `.env`, connect to Supabase or send real email. Coverage includes JWT verification without DB reads, OTP expiry/replay, activation/approval/reset, ownership, permanent-deletion safeguards, local origins, CAPTCHA loading/retry and restaurant regressions.
+It generates Prisma Client, builds React and runs tests against an isolated PGlite database with mocked Storage, email delivery and CAPTCHA responses. Tests do not load `.env`, connect to Supabase or send real email. Coverage includes administrator TOTP setup/disable, recovery-code replacement, fourth-failure lockout and concurrent replay protection, JWT verification without DB reads, OTP expiry/replay, activation/approval/reset, ownership, permanent-deletion safeguards, local origins, CAPTCHA loading/retry and restaurant regressions.
 
 Real SMTP delivery and Google CAPTCHA require a manual check with configured credentials. The disposable preview is not evidence that those external services work.
 
@@ -338,12 +395,12 @@ npm run build
 npm start
 ```
 
-Configure `NODE_ENV=production`, the public HTTPS `APP_ORIGIN`, database/JWT/SMTP/Storage settings and the host's `PORT`. Apply required migrations separately before serving traffic. Express binds to `0.0.0.0`, serves React and the API from one origin, trusts one reverse-proxy hop and uses Bearer tokens without application cookies. This full-stack application cannot run on GitHub Pages alone.
+Configure `NODE_ENV=production`, the public HTTPS `APP_ORIGIN`, database/JWT/MFA encryption/SMTP/Storage settings and the host's `PORT`. Apply required migrations separately before serving traffic. Express binds to `0.0.0.0`, serves React and the API from one origin, trusts one reverse-proxy hop and uses Bearer tokens without application cookies. This full-stack application cannot run on GitHub Pages alone.
 
 ## Further documentation
 
 - [Documentation index](docs/README.md)
-- [Block 9 authentication and permissions](docs/block9-authentication.md)
+- [Blocks 9–10 authentication and permissions](docs/block9-authentication.md)
 - [Pagination, search, indexes and bookmark behavior](docs/block7-pagination.md)
 - [Pagination demo dishes](docs/block7-demo-dishes.md)
 - [Recipes and inventory demo data](docs/demo-data.md)

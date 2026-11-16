@@ -43,16 +43,16 @@ export function createAccountDelivery(
           transport.sendMail({
             from: config.SMTP_FROM,
             to: email,
-            subject:
-              purpose === "login"
-                ? "Your Santaishi-tei sign-in code"
-                : purpose === "verify"
-                  ? "Verify your Santaishi-tei email"
-                  : "Reset your Santaishi-tei password",
-            text:
-              purpose === "login"
-                ? `Your sign-in code is ${token}. It expires in 5 minutes. Never share this code. If you did not sign in, ignore this email.`
-                : `${purpose === "verify" ? "Verify your email" : "Reset your password"} using this single-use link:
+            subject: ["login", "mfa-setup"].includes(purpose)
+              ? purpose === "mfa-setup"
+                ? "Confirm Santaishi-tei authenticator setup"
+                : "Your Santaishi-tei sign-in code"
+              : purpose === "verify"
+                ? "Verify your Santaishi-tei email"
+                : "Reset your Santaishi-tei password",
+            text: ["login", "mfa-setup"].includes(purpose)
+              ? `Your ${purpose === "mfa-setup" ? "authenticator setup" : "sign-in"} code is ${token}. It expires in 5 minutes. Never share this code. If you did not sign in, ignore this email.`
+              : `${purpose === "verify" ? "Verify your email" : "Reset your password"} using this single-use link:
 ${link}
 
 The link expires in ${purpose === "verify" ? "24 hours" : "30 minutes"}. If you did not request this, ignore this email.`,

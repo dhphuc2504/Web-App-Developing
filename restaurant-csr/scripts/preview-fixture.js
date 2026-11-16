@@ -120,6 +120,7 @@ const app = createApp({
   config: {
     NODE_ENV: "test",
     JWT_SECRET: "Disposable-fixture-jwt-secret-only-2026",
+    MFA_ENCRYPTION_KEY: "ab".repeat(32), // Disposable fixture only.
     APP_ORIGIN: "http://127.0.0.1:3003",
   },
 });

@@ -1104,3 +1104,20 @@ body:has(.pagination-toolbar) {
 .chef-delete-section form { margin-top: 20px; }
 .chef-delete-section .destructive-button { background: #883f31; border-color: #883f31; color: #fff8ed; }
 @media(max-width: 560px) { .chef-profile-dialog { padding: 24px 20px; } .chef-profile-actions > button { flex: 1 1 140px; } .chef-delete-section { padding: 18px 14px; } }
+
+/* Administrator MFA keeps the paper palette and gives controls a single clear column. */
+.security-layout { display: grid; grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); gap: 48px; max-width: 1100px; margin: 24px auto 60px; align-items: start; }
+.security-intro { line-height: 1.8; color: var(--soft); }
+.security-card.form-panel { display: block; padding: clamp(22px, 4vw, 44px); min-width: 0; }
+.security-card h2 { font-size: 28px; margin: 16px 0; }
+.security-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.totp-qr { display: block; width: 230px; max-width: 100%; height: auto; margin: 20px auto; border: 8px solid white; }
+.totp-manual { display: block; overflow-wrap: anywhere; padding: 16px 0; user-select: all; }
+.security-card details { margin-bottom: 24px; }
+.recovery-codes { display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; padding-left: 24px; margin: 24px 0; }
+.recovery-codes code { font-size: 12px; overflow-wrap: anywhere; user-select: all; }
+.auth-card label.recovery-saved { display: flex; gap: 12px; align-items: start; margin: 24px 0; }
+.auth-card .recovery-saved input { width: 20px; min-height: 20px; height: 20px; flex: 0 0 20px; margin: 0; padding: 0; }
+.recovery-panel > button { width: 100%; }
+.security-notice { padding: 14px; background: #e8eddf; }
+@media (max-width: 760px) { .security-layout { grid-template-columns: minmax(0,1fr); gap: 24px; } }

@@ -97,3 +97,14 @@ export const stockApi = {
   ledger: (key, signal) =>
     http.request(`/ingredients/${id(key)}/movements`, { signal }),
 };
+
+export const mfaApi = {
+  status: (signal) => http.request("/auth/mfa", { signal }),
+  submit: (action, body) =>
+    http.request("/auth/mfa" + (action === "disable" ? "" : "/" + action), {
+      method: action === "disable" ? "DELETE" : "POST",
+      body,
+      blockUI: false,
+      timeoutMs: 45000,
+    }),
+};

@@ -1,3 +1,4 @@
+import { Security } from "./pages/Security.jsx";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -174,6 +175,14 @@ function Shell() {
             element={
               <Guard admin>
                 <Office />
+              </Guard>
+            }
+          />
+          <Route
+            path="/admin/security"
+            element={
+              <Guard admin>
+                <Security />
               </Guard>
             }
           />

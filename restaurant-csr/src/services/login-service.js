@@ -1,3 +1,4 @@
+import { createMfaService } from "./mfa-service.js";
 import {
   createHash,
   createHmac,
@@ -10,6 +11,7 @@ import { loginInput } from "../validators/input.js";
 import { AppError } from "../lib/errors.js";
 const digest = (s) => createHash("sha256").update(s).digest("hex");
 export function createLoginService(db, delivery, jwt, config) {
+  const mfa = createMfaService(db, delivery, jwt, config);
   const codeHash = (challenge, code) =>
     createHmac("sha256", config.JWT_SECRET)
       .update(challenge + ":" + code)
@@ -61,6 +63,8 @@ export function createLoginService(db, delivery, jwt, config) {
           "INVALID_CREDENTIALS",
         );
       eligible(user);
+      if (user.role === "admin" && (await mfa.enabled(user.id)))
+        return mfa.startLogin(user);
       const challenge = randomBytes(32).toString("hex"),
         code = String(randomInt(1000000)).padStart(6, "0");
       const created = await db.$transaction(async (tx) => {
@@ -101,9 +105,18 @@ export function createLoginService(db, delivery, jwt, config) {
         await db.loginChallenge.deleteMany({ where: { id: created.id } });
         throw error;
       }
-      return { next: "mfa", challenge, expiresIn: 300 };
+      return { next: "mfa", method: "email", challenge, expiresIn: 300 };
     },
-    async verify(body) {
+    async verify(body = {}) {
+      if (
+        typeof body?.challenge === "string" &&
+        /^[a-f0-9]{64}$/.test(body.challenge)
+      ) {
+        const challenge = await db.mfaChallenge.findUnique({
+          where: { tokenHash: digest(body.challenge) },
+        });
+        if (challenge) return mfa.verifyLogin(body);
+      }
       if (
         typeof body.challenge !== "string" ||
         !/^[a-f0-9]{64}$/.test(body.challenge) ||
@@ -146,6 +159,12 @@ export function createLoginService(db, delivery, jwt, config) {
         });
         eligible(user);
         if (user.sessionVersion !== current.sessionVersion) return null;
+        if (
+          user.role === "admin" &&
+          (await tx.adminMfa.findUnique({ where: { userId: user.id } }))
+            ?.enabled
+        )
+          return null;
         await tx.loginChallenge.update({
           where: { id: row.id },
           data: { usedAt: new Date() },

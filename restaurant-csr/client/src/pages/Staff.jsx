@@ -1,3 +1,8 @@
+import {
+  MfaCode,
+  RecoveryCodes,
+  useMfaLock,
+} from "../components/MfaControls.jsx";
 import { useDishBrowser } from "../hooks/useDishBrowser.js";
 import {
   DishFilters,
@@ -14,6 +19,7 @@ import {
   useParams,
 } from "react-router-dom";
 import {
+  mfaApi,
   accountApi,
   categoriesApi,
   chefsApi,
@@ -59,7 +65,11 @@ export function Login() {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [challenge, setChallenge] = useState(null),
-    [code, setCode] = useState("");
+    [code, setCode] = useState(""),
+    [factor, setFactor] = useState("email"),
+    [method, setMethod] = useState("totp"),
+    [recovery, setRecovery] = useState(null);
+  const remaining = useMfaLock(mutation.error);
   if (user)
     return (
       <Navigate to={user.role === "admin" ? "/admin" : "/kitchen"} replace />
@@ -73,7 +83,9 @@ export function Login() {
         </h1>
         <p>
           {challenge
-            ? "Check your email for your six-digit sign-in code."
+            ? factor === "totp"
+              ? "Enter the code from your authenticator app."
+              : "Check your email for your six-digit sign-in code."
             : "Your place in the kitchen."}
         </p>
       </div>
@@ -83,78 +95,116 @@ export function Login() {
           e.preventDefault();
           const result = await mutation.run(() =>
             challenge
-              ? sessionApi.otp({ challenge, code })
+              ? sessionApi.otp({
+                  challenge,
+                  code: code.trim(),
+                  method: factor === "totp" ? method : "email",
+                })
               : sessionApi.login({ email, password }),
           );
           if (result?.next === "mfa") {
             setChallenge(result.challenge);
+            setFactor(result.method || "email");
+            setMethod("totp");
             setPassword("");
+            setCode("");
+          } else if (result?.next === "recovery-codes") {
+            setRecovery(result);
+            setCode("");
           } else if (result?.user) {
             setUser(result.user);
           }
         }}
       >
         <ErrorNotice error={mutation.error} />
+        {remaining > 0 && (
+          <p role="status">Try again in {remaining} seconds.</p>
+        )}
+        {recovery && (
+          <RecoveryCodes
+            codes={recovery.recoveryCodes}
+            busy={mutation.saving}
+            onSaved={async () => {
+              const result = await mutation.run(() =>
+                mfaApi.submit("login/ack", {
+                  challenge: recovery.challenge,
+                  saved: true,
+                }),
+              );
+              if (result?.user) setUser(result.user);
+            }}
+          />
+        )}
+
         {mutation.saving && (
           <p role="status">
             {challenge
               ? "Checking your code…"
-              : "Checking your account and sending a sign-in code…"}
+              : "Checking your account…"}
           </p>
         )}
-        <fieldset className="auth-fields" disabled={mutation.saving}>
-          {challenge ? (
-            <>
-              <Field
-                name="code"
-                label="Email sign-in code (valid for 5 minutes)"
-                value={code}
-                onChange={setCode}
-                required
+        {!recovery && (
+          <fieldset className="auth-fields" disabled={mutation.saving}>
+            {challenge && factor === "totp" ? (
+              <MfaCode
+                method={method}
+                setMethod={setMethod}
+                code={code}
+                setCode={setCode}
               />
-              <p>
-                Five incorrect codes exhaust this challenge. Sign in again to
-                request another email after one minute.
-              </p>
-            </>
-          ) : (
-            <>
-              <Field
-                name="email"
-                label="Email address"
-                type="email"
-                value={email}
-                onChange={setEmail}
-                required
-              />
-              <Field
-                name="password"
-                label="Password"
-                type="password"
-                value={password}
-                onChange={setPassword}
-                required
-              />
-            </>
-          )}
-          <button disabled={mutation.saving}>
-            {challenge ? "Verify code & enter" : "Send sign-in code"} ↗
-          </button>
-          {challenge && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={mutation.saving}
-              onClick={() => {
-                setChallenge(null);
-                setCode("");
-                mutation.clearError();
-              }}
-            >
-              Back to sign in / request another code
+            ) : challenge ? (
+              <>
+                <Field
+                  name="code"
+                  label="Email sign-in code (valid for 5 minutes)"
+                  value={code}
+                  onChange={setCode}
+                  required
+                />
+                <p>
+                  Five incorrect codes exhaust this challenge. Sign in again to
+                  request another email after one minute.
+                </p>
+              </>
+            ) : (
+              <>
+                <Field
+                  name="email"
+                  label="Email address"
+                  type="email"
+                  value={email}
+                  onChange={setEmail}
+                  required
+                />
+                <Field
+                  name="password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                  required
+                />
+              </>
+            )}
+            <button disabled={mutation.saving || remaining > 0}>
+              {challenge ? "Verify code & enter" : "Continue"} ↗
             </button>
-          )}
-        </fieldset>
+            {challenge && (
+              <button
+                type="button"
+                className="secondary"
+                disabled={mutation.saving}
+                onClick={() => {
+                  setChallenge(null);
+                  setCode("");
+                  mutation.clearError();
+                }}
+              >
+                Back to sign in / request another code
+              </button>
+            )}
+          </fieldset>
+        )}
         {mutation.error?.code === "ACCOUNT_NOT_ACTIVATED" && (
           <Link to="/resend-verification">Resend verification email</Link>
         )}
@@ -763,6 +813,7 @@ export function Office() {
       <nav className="office-links" aria-label="Office shortcuts">
         {[
           ["/admin/staff", "Chef accounts"],
+          ["/admin/security", "Account security"],
           ["/admin/categories", "Menu categories"],
           ["/kitchen/ingredients", "Ingredient pantry"],
           ["/kitchen", "Kitchen board"],

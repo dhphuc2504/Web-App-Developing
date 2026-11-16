@@ -10,6 +10,7 @@ const parsed = z
     APP_ORIGIN: z.string().url().default("http://localhost:3000"),
     DATABASE_URL: z.string().min(1),
     JWT_SECRET: z.string().min(32),
+    MFA_ENCRYPTION_KEY: z.string().optional(),
     SMTP_HOST: z.string().optional(),
     SMTP_PORT: z.coerce.number().default(587),
     SMTP_SECURE: z
