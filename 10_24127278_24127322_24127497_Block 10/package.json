@@ -1,0 +1,67 @@
+{
+  "name": "restaurant-csr",
+  "version": "1.0.0",
+  "description": "Blocks 6–10: React restaurant with JWT, admin TOTP, email OTP and role/ownership authorization",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"node --watch src/server.js\" \"vite --host 127.0.0.1\"",
+    "dev:api": "node --watch src/server.js",
+    "build": "vite build",
+    "start": "node src/server.js",
+    "test": "npm run db:generate && npm run build && node --test tests/*.test.js",
+    "db:generate": "node scripts/prisma.js generate",
+    "db:validate": "node scripts/prisma.js validate",
+    "admin:create": "node scripts/create-admin.js",
+    "preview:fixture": "node scripts/preview-fixture.js",
+    "format": "prettier --write \"client/src/**/*.{js,jsx,css}\" \"src/**/*.js\" \"tests/*.js\" \"scripts/*.js\" vite.config.js prisma.config.js",
+    "demo:seed": "node scripts/demo-inventory.js",
+    "db:migrate:summary": "node scripts/migrate-public-summary.js",
+    "demo:seed:dishes": "node scripts/seed-pagination-dishes.js",
+    "db:migrate:search": "node scripts/migrate-dish-search.js",
+    "db:check:search": "node scripts/check-dish-search.js",
+    "db:migrate:auth": "node scripts/migrate-auth.js",
+    "db:migrate:mfa": "node scripts/migrate-mfa.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "argon2": "^0.45.1",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jose": "^6.2.16",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.4.0",
+    "otplib": "^13.6.0",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.0",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.4.3",
+    "concurrently": "^9.2.0",
+    "prettier": "^3.9.10",
+    "prisma": "^7.10.0",
+    "supertest": "^7.3.1",
+    "vite": "^7.1.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.0",
+    "mysql2": "^3.24.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
